@@ -16,19 +16,28 @@
 
 import { getContentType } from './contenttype'
 import SparkMD5 from 'spark-md5'
+import i18n from '@/i18n'
 
 export function putPresignature(params) {
   return new Promise((resolve, reject) => {
-    const { putSignUrl, env, zone, vol, prefix, file_name, content_type, part_num, user } = params
+    const {
+      putSignUrl,
+      vol,
+      prefix,
+      user,
+      file_name: fileName,
+      content_type: contentType,
+      part_num: partNum,
+    } = params
     if (!putSignUrl) {
-      const err = new Error(this.$t('filemanage.lacksign'))
+      const err = new Error(i18n.t('filemanage.lacksign'))
       reject(err)
       return
     }
     const options = {
       method: 'get',
     }
-    request(`${putSignUrl}?&vol=${vol}&user=${user}&prefix=${prefix}&file_name=${file_name}&content_type=${content_type}` + (part_num !== 1 ? `&part_number=${part_num}` : ''), options)
+    request(`${putSignUrl}?&vol=${vol}&user=${user}&prefix=${prefix}&file_name=${fileName}&content_type=${contentType}` + (partNum !== 1 ? `&part_number=${partNum}` : ''), options)
       .then(res => resolve(res?.data), err => reject(err))
   })
 }
@@ -46,19 +55,18 @@ export function transformMD5(fileName, filePart) {
     reader.addEventListener('load', async (e) => {
       let spark = new SparkMD5.ArrayBuffer()
       spark.append(e.target.result)
-      let buf = Buffer.from(spark.end(), 'hex')
+      spark.end()
       const options = {
         method: 'put',
         body: reader.result,
         headers: {
           'Content-type': contenttype,
-          // 'Content-Md5': buf.toString('base64')
-        }
+          // 'Content-Md5': md5Base64
+        },
       }
       resolve(options)
       spark.destroy()
       spark = null
-      buf = null
       reader.removeEventListener('error', () => { })
       reader.removeEventListener('load', () => { })
       reader = null
@@ -79,7 +87,7 @@ export async function upload(urls, fileList, xhrOptions, prefix, chunkSize) {
       headers: {
         'Content-type': contenttype,
       },
-      ...xhrOptions
+      ...xhrOptions,
     }
     function wrapRequestFn(resolve, reject) {
       request(urls[partIndex], options, fileList[partIndex].name, partIndex, max, chunkSize).then(res => {
@@ -93,12 +101,11 @@ export async function upload(urls, fileList, xhrOptions, prefix, chunkSize) {
         }
       }, e => {
         errorCount++
-        if (errorCount < 2 && e !== this.$t('filemanage.cancelmanually')) {
+        if (errorCount < 2 && e !== i18n.t('filemanage.cancelmanually')) {
           wrapRequestFn(resolve, reject) // 重试
         } else {
           reject(e)
         }
-        reject(e)
       }).catch(e => reject(e))
     }
     wrapRequestFn(resolve, reject)
@@ -109,7 +116,7 @@ export function completemultiFun(params) {
   // 合并分片
   const options = {
     method: 'POST',
-    body: JSON.stringify(params)
+    body: JSON.stringify(params),
   }
   return request(params.completeUrl, options)
 }
@@ -125,7 +132,7 @@ export function request(url, options, fileName, partIndex, max, chunkSize) {
     }
     if (options.headers) {
       Object.keys(options.headers).forEach(k =>
-        xhr.setRequestHeader(k, options.headers[k])
+        xhr.setRequestHeader(k, options.headers[k]),
       )
     }
 
@@ -134,7 +141,30 @@ export function request(url, options, fileName, partIndex, max, chunkSize) {
         options.onProgress({ loaded: evt.loaded, chunkSize, fileName, partIndex, max })
       }
     })
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
+
+    if (options.timeout) {
+      xhr.timeout = options.timeout
+    }
+
+    const buildRequestError = (code, message, reqId = '') => ({
+      code,
+      message,
+      reqId,
+      isRequestError: true,
+    })
+
+    xhr.onerror = () => {
+      reject(buildRequestError(0, 'xhr request failed, code: 0; network error or cors blocked'))
+    }
+
+    xhr.ontimeout = () => {
+      reject(buildRequestError(0, 'xhr request failed, code: 0; request timeout'))
+    }
+
+    xhr.onabort = () => {
+      reject(i18n.t('filemanage.cancelmanually'))
+    }
+
     xhr.onreadystatechange = () => {
       const responseText = xhr.responseText
       if (xhr.readyState !== 4) {
@@ -144,14 +174,30 @@ export function request(url, options, fileName, partIndex, max, chunkSize) {
       try {
         reqId = xhr.getResponseHeader('x-amz-request-id') || xhr.getResponseHeader('X-Reqid') || ''
       } catch (error) { }
-      if (xhr.status !== 200 || (responseText && JSON.parse(responseText)?.code !== 200)) {
+
+      let parsedResponse = responseText
+      if (responseText) {
+        try {
+          parsedResponse = JSON.parse(responseText)
+        } catch (error) {
+          parsedResponse = responseText
+        }
+      }
+
+      const isStatusSuccess = xhr.status >= 200 && xhr.status < 300
+      const hasBizCode = parsedResponse && typeof parsedResponse === 'object' && Object.prototype.hasOwnProperty.call(parsedResponse, 'code')
+      const isBizSuccess = !hasBizCode || Number(parsedResponse.code) === 200
+
+      if (!isStatusSuccess || !isBizSuccess) {
         let message = `xhr request failed, code: ${xhr.status};`
         if (responseText) {
-          message = message + ` response: ${responseText}`
+          message = `${message} response: ${responseText}`
         }
-        reject({ code: xhr.status, message: message, reqId: reqId, isRequestError: true })
+        reject(buildRequestError(xhr.status, message, reqId))
+        return
       }
-      resolve({ code: xhr.status, data: responseText ? JSON.parse(responseText) : 'OK', reqId: reqId, fileName })
+
+      resolve({ code: xhr.status, data: responseText ? parsedResponse : 'OK', reqId: reqId, fileName })
     }
 
     xhr.send(options.body)
@@ -186,7 +232,7 @@ export async function uploadSingleFile(url, file, xhrOptions, prefix) {
           'Content-type': contenttype,
           // 'Content-Md5': buf.toString('base64')
         },
-        ...xhrOptions
+        ...xhrOptions,
       }
       // spark.destroy()
       // spark = null

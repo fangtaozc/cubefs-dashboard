@@ -123,7 +123,7 @@ export default {
       return boo?.[0].upload_id
     },
     async doUploadHttp(param) {
-      const { name: id, } = that.$route.query
+      const { name: id } = that.$route.query
       const {
         file: { name },
       } = param
@@ -152,8 +152,8 @@ export default {
         file_name: name,
         content_type: getContentType(name),
         part_num: fileChunkedList.length || 1,
-        putSignUrl: putSignUrl({cluster_name: this.clusterName}),
-        completeUrl: completeUrl({cluster_name: this.clusterName}),
+        putSignUrl: putSignUrl({ cluster_name: this.clusterName }),
+        completeUrl: completeUrl({ cluster_name: this.clusterName }),
         chunkSize,
         prefix: that.prefix,
         user: this.$route.query.owner,
@@ -187,7 +187,7 @@ export default {
         .then((res) => {
           const errArr = res.filter((i) => i.code !== 200)
           const fIndex = that.findIndexFun(res[0].fileName)
-          const status = errArr.length > 0 ? 'success' : 'error'
+          const status = errArr.length > 0 ? 'error' : 'success'
           if (fIndex !== -1) {
             that.getFileUrl(that.fileList[fIndex].name).then((res) => {
               // eslint-disable-next-line camelcase
@@ -205,7 +205,8 @@ export default {
             that.fileList[fIndex].status = 'error'
             that.fileList[fIndex].isFileUploadLoading = false
           }
-          that.$message.warning(err)
+          const msg = typeof err === 'string' ? err : (err && err.message) || this.$t('filemanage.uploaderr')
+          that.$message.warning(msg)
         })
     },
     getProgress({ loaded, chunkSize, fileName, partIndex }, size) {

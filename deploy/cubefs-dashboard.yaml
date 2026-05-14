@@ -1,0 +1,262 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: storage-monitor
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "CubefsRoot@123456"
+  MYSQL_USER: "cubefs"
+  MYSQL_PASSWORD: "Cubefs@123456"
+  MYSQL_DATABASE: "cubefs_dashboard"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: storage-monitor
+spec:
+  selector:
+    app: cubefs-dashboard-mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cubefs-dashboard-mysql
+  namespace: storage-monitor
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cubefs-dashboard-mysql
+  template:
+    metadata:
+      labels:
+        app: cubefs-dashboard-mysql
+    spec:
+      nodeSelector:
+        cubefs.io/monitor: "true"
+      initContainers:
+      - name: init-mysql-data-dir
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - chown -R 999:999 /var/lib/mysql
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: mysql
+          containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: mysql-data
+        hostPath:
+          path: /mnt/pfs/test/tao.fang/cubefs-monitor/mysql
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cubefs-dashboard-config
+  namespace: storage-monitor
+data:
+  config.yml: |
+    server:
+      port: 6007
+      mode: prod
+      static_resource:
+        enable: true
+        relative_path: /portal
+        root_path: /app/dist
+    prefix:
+      api: /api/cubefs
+    mysql:
+      host: "mysql.storage-monitor.svc.cluster.local"
+      port: "3306"
+      slaveHost: ""
+      slavePort: ""
+      user: "cubefs"
+      password: "+QEE0UOyL0NlGpcGlFLgnQ=="
+      database: "cubefs_dashboard"
+      maxIdleConn: 20
+      maxOpenConn: 300
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cubefs-dashboard
+  namespace: storage-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cubefs-dashboard
+  template:
+    metadata:
+      labels:
+        app: cubefs-dashboard
+    spec:
+      nodeSelector:
+        cubefs.io/monitor: "true"
+      initContainers:
+      - name: wait-for-mysql
+        image: hub.shiyak-office.com/storage/busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z mysql.storage-monitor.svc.cluster.local 3306; do
+            echo "waiting for mysql..."
+            sleep 2
+          done
+      containers:
+      - name: cubefs-dashboard
+        image: hub.shiyak-office.com/storage/cubefs-dashboard:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 6007
+        args:
+        - -c
+        - /app/config/config.yml
+        volumeMounts:
+        - name: app-config
+          mountPath: /app/config/config.yml
+          subPath: config.yml
+        readinessProbe:
+          tcpSocket:
+            port: 6007
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 6007
+          initialDelaySeconds: 20
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+      volumes:
+      - name: app-config
+        configMap:
+          name: cubefs-dashboard-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cubefs-dashboard
+  namespace: storage-monitor
+spec:
+  selector:
+    app: cubefs-dashboard
+  ports:
+  - name: http
+    port: 6007
+    targetPort: 6007
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cubefs-dashboard-allow-egress
+  namespace: storage-monitor
+spec:
+  podSelector:
+    matchLabels:
+      app: cubefs-dashboard
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: cubefs-dashboard-mysql
+    ports:
+    - protocol: TCP
+      port: 3306
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cubefs-dashboard-mysql-allow-ingress
+  namespace: storage-monitor
+spec:
+  podSelector:
+    matchLabels:
+      app: cubefs-dashboard-mysql
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cubefs-dashboard
+    ports:
+    - protocol: TCP
+      port: 3306

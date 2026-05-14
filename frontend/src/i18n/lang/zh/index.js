@@ -157,7 +157,7 @@ export default {
     yes: '是',
     confirmdeletecluster: '确定删除集群么?',
     volumebelongsto: '卷归属于',
-    transferownershipto: '转移所有权给'
+    transferownershipto: '转移所有权给',
   },
   button: {
     cancel: '取 消',
@@ -280,6 +280,7 @@ export default {
     standard: '标准存储',
     tenant: 'Owner租户',
     tips1: '文件管理操作需要先配置跨域才能放开，且跨域来源需包含访问域名，例如',
+    uploaderr: '文件上传失败',
     upaddr: '上传文件至 ',
     whichcluster: '所在集群',
   },
@@ -439,7 +440,7 @@ export default {
     CFS_VOLS_UPDATE: '编辑纠删码卷',
     CLUSTER_CREATE: '上架集群',
     CLUSTER_UPDATE: '修改集群',
-    CLUSTER_DELETE: '删除集群' // '删除集群'
+    CLUSTER_DELETE: '删除集群', // '删除集群'
   },
-  ...zhLocale
+  ...zhLocale,
 }

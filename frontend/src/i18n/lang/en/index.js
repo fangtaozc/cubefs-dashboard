@@ -280,6 +280,7 @@ export default {
     standard: 'Standard',
     tenant: 'Tenant',
     tips1: 'You should configure CORS policy first before manage files, and request domain must be in the source list, e.g.',
+    uploaderr: 'File upload failed',
     upaddr: 'Upload to ',
     whichcluster: 'Cluster',
   },
@@ -439,7 +440,7 @@ export default {
     CFS_VOLS_UPDATE: 'edit EC', // '编辑纠删码卷',
     CLUSTER_CREATE: 'create cluster', // '上架集群',
     CLUSTER_UPDATE: 'edit cluster', // '修改集群',
-    CLUSTER_DELETE: 'delete cluster' // '删除集群'
+    CLUSTER_DELETE: 'delete cluster', // '删除集群'
   },
-  ...enLocale
+  ...enLocale,
 }

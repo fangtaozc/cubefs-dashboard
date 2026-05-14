@@ -1,12 +1,10 @@
-# cfs-gui Makefile
+IMAGE ?= hub.shiyak-office.com/storage/cubefs-dashboard
+TAG ?= v1.0.3
 
-phony := build 
-phony += clean
+.PHONY: image-build image-push
 
-build: build.sh
-	sh build.sh
+image:
+	./deploy/build-image.sh $(IMAGE) $(TAG)
 
-clean: bin
-	rm -rf bin
-
-.PHONY: $(phony)
+image-push:
+	docker push $(IMAGE):$(TAG)
