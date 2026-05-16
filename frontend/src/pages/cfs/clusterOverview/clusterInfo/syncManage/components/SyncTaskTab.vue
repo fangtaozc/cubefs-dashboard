@@ -95,6 +95,7 @@
                 <div class="shard-stats">
                   <span>文件 {{ shard.progress.filesDone }}/{{ shard.progress.filesTotal }}</span>
                   <span>{{ formatBytes(shard.progress.bytesDone) }}/{{ formatBytes(shard.progress.bytesTotal) }}</span>
+                  <span v-if="formatMBps(shard.progress.throughputMBps)" class="shard-throughput">{{ formatMBps(shard.progress.throughputMBps) }}</span>
                 </div>
               </template>
               <div v-else class="shard-pending">
@@ -133,6 +134,10 @@
                 :status="progressStatus(scope.row.status)"
                 :show-text="false"
               />
+            </div>
+            <div v-if="formatMBps(scope.row.totalProgress.throughputMBps)" class="total-progress-throughput">
+              <span class="total-progress-throughput-label">聚合速率</span>
+              <span class="total-progress-throughput-value">{{ formatMBps(scope.row.totalProgress.throughputMBps) }}</span>
             </div>
           </template>
           <span v-else class="no-progress-text">
@@ -248,9 +253,13 @@ export default {
       page: {
         per_page: 10,
       },
+      refreshTimer: null,
     }
   },
   computed: {
+    hasActiveTasks() {
+      return this.dataList.some(t => this.isActive(t.status))
+    },
     sortedDataList() {
       if (!this.dataList.length) return []
       const list = [...this.dataList]
@@ -284,6 +293,19 @@ export default {
       },
     },
   },
+  mounted() {
+    this.refreshTimer = setInterval(() => {
+      if (this.hasActiveTasks) {
+        this.loadData()
+      }
+    }, 5000)
+  },
+  beforeDestroy() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer)
+      this.refreshTimer = null
+    }
+  },
   methods: {
     async loadData() {
       this.loading = true
@@ -316,6 +338,11 @@ export default {
       const units = ['B', 'KB', 'MB', 'GB', 'TB']
       const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
       return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
+    },
+    formatMBps(mbps) {
+      if (!mbps || mbps <= 0) return null
+      if (mbps >= 1) return mbps.toFixed(1) + ' MB/s'
+      return (mbps * 1024).toFixed(0) + ' KB/s'
     },
     filesPct(progress) {
       if (!progress || !progress.filesTotal) return 0
@@ -535,6 +562,11 @@ export default {
   color: #909399;
 }
 
+.shard-throughput {
+  color: #409eff;
+  flex-shrink: 0;
+}
+
 .shard-pending {
   font-size: 11px;
   color: #c0c4cc;
@@ -551,6 +583,23 @@ export default {
   justify-content: space-between;
   color: #606266;
   margin-bottom: 3px;
+}
+
+.total-progress-throughput {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.total-progress-throughput-label {
+  color: #909399;
+}
+
+.total-progress-throughput-value {
+  color: #409eff;
+  font-weight: 500;
 }
 
 .no-progress-text {
