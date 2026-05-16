@@ -76,12 +76,19 @@
                   @click="showWorker(shard.owner)"
                 >{{ shard.owner }}</a>
                 <span v-else class="shard-owner shard-owner--none">-</span>
+                <el-tag
+                  v-if="shard.status && shard.status !== 'running' && shard.status !== 'queued'"
+                  :type="statusTagType(shard.status)"
+                  size="mini"
+                  disable-transitions
+                  class="shard-status-tag"
+                >{{ shard.status }}</el-tag>
               </div>
               <template v-if="shard.progress && shard.progress.filesTotal > 0">
                 <el-progress
                   :percentage="filesPct(shard.progress)"
                   :stroke-width="5"
-                  :status="progressStatus(shard.status)"
+                  :status="shardProgressStatus(shard.status, scope.row.status)"
                   :show-text="false"
                   class="shard-bar"
                 />
@@ -324,6 +331,16 @@ export default {
       if (status === 'cancelled') return 'warning'
       return null
     },
+    shardProgressStatus(shardStatus, parentStatus) {
+      if (shardStatus === 'succeeded') return 'success'
+      if (shardStatus === 'cancelled') return 'warning'
+      if (shardStatus === 'failed') {
+        // Parent still running — shard failure is not yet final (other shards may succeed).
+        // Show as warning (yellow) instead of exception (red) to avoid false alarm.
+        return (parentStatus === 'running' || parentStatus === 'queued') ? 'warning' : 'exception'
+      }
+      return null
+    },
     isActive(status) {
       return status === 'running' || status === 'queued'
     },
@@ -488,6 +505,7 @@ export default {
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
 .shard-owner {
@@ -500,6 +518,10 @@ export default {
     color: #909399;
     cursor: default;
   }
+}
+
+.shard-status-tag {
+  flex-shrink: 0;
 }
 
 .shard-bar {

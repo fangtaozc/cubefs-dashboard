@@ -121,6 +121,68 @@ func Init() error {
 		Rollback: func(db *gorm.DB) error {
 			return nil
 		},
+	}, &gormigrate.Migration{
+		ID: "202605140_add_sync_fields_to_cluster",
+		Migrate: func(tx *gorm.DB) error {
+			if !tx.Migrator().HasColumn(&model.Cluster{}, "SyncNodeHTTPPort") {
+				if err := tx.Migrator().AddColumn(&model.Cluster{}, "SyncNodeHTTPPort"); err != nil {
+					return err
+				}
+			}
+			if !tx.Migrator().HasColumn(&model.Cluster{}, "SyncAdminToken") {
+				if err := tx.Migrator().AddColumn(&model.Cluster{}, "SyncAdminToken"); err != nil {
+					return err
+				}
+			}
+			return tx.Model(&model.Cluster{}).Where("sync_node_http_port = 0").Update("sync_node_http_port", 17911).Error
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605140_init_sync_defaults",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605150_create_sync_storage_backend",
+		Migrate: func(tx *gorm.DB) error {
+			if tx.Migrator().HasTable(&model.SyncStorageBackend{}) {
+				return nil
+			}
+			return tx.Migrator().AutoMigrate(&model.SyncStorageBackend{})
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605160_drop_prefix_from_sync_storage_backend",
+		Migrate: func(tx *gorm.DB) error {
+			if !tx.Migrator().HasColumn(&model.SyncStorageBackend{}, "prefix") {
+				return nil
+			}
+			return tx.Migrator().DropColumn(&model.SyncStorageBackend{}, "prefix")
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605170_sync_delete_task_permission",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
 	})
 	m := gormigrate.New(mysql.GetDB(), gormigrate.DefaultOptions, migrations)
 	return m.Migrate()
