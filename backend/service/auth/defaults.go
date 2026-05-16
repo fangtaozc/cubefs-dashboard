@@ -43,6 +43,10 @@ var (
 			"CFS_DATAPARTITION_CREATE", "CFS_DATAPARTITION_LOAD", "CFS_DATAPARTITION_LIST", "CFS_DATAPARTITION_DECOMMISSION", "CFS_DATAPARTITION_DIAGNOSIS",
 			"CFS_METAPARTITION_CREATE", "CFS_METAPARTITION_LOAD", "CFS_METAPARTITION_LIST", "CFS_METAPARTITION_DECOMMISSION", "CFS_METAPARTITION_DIAGNOSIS",
 			"CFS_DISKS_LIST", "CFS_DISKS_DECOMMISSION",
+			"CFS_SYNCNODE_LIST", "CFS_SYNCNODE_TASKS", "CFS_SYNCNODE_VERSION", "CFS_SYNCNODE_STAT", "CFS_SYNCNODE_RELOAD", "CFS_SYNCNODE_DECOMMISSION", "CFS_SYNCNODE_DRAIN", "CFS_SYNCNODE_RESTORE",
+			"CFS_SYNCRULE_LIST", "CFS_SYNCRULE_GET", "CFS_SYNCRULE_CREATE", "CFS_SYNCRULE_UPDATE", "CFS_SYNCRULE_DELETE", "CFS_SYNCRULE_PAUSE", "CFS_SYNCRULE_RESUME", "CFS_SYNCRULE_TRIGGER",
+			"CFS_SYNCTASK_LIST", "CFS_SYNCTASK_GET", "CFS_SYNCTASK_EXPORT", "CFS_SYNCTASK_CANCEL", "CFS_SYNCTASK_RETRY", "CFS_SYNCTASK_DELETE", "CFS_SYNCNODE_DISPATCH",
+			"CFS_SYNCBACKEND_LIST", "CFS_SYNCBACKEND_CREATE", "CFS_SYNCBACKEND_UPDATE", "CFS_SYNCBACKEND_DELETE", "CFS_SYNCBACKEND_CONFIG",
 			"CFS_S3_FILES_LIST", "CFS_S3_FILES_DOWNLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_COMPLETE", "CFS_S3_DIRS_CREATE",
 			"OPTYPES_CREATE", "OPTYPES_UPDATE", "OPTYPES_LIST", "OPLOGS_LIST",
 		},
@@ -62,6 +66,10 @@ var (
 			"CFS_DATAPARTITION_LIST", "CFS_DATAPARTITION_DECOMMISSION", "CFS_DATAPARTITION_DIAGNOSIS",
 			"CFS_METAPARTITION_LIST", "CFS_METAPARTITION_DIAGNOSIS",
 			"CFS_DISKS_LIST",
+			"CFS_SYNCNODE_LIST", "CFS_SYNCNODE_TASKS", "CFS_SYNCNODE_VERSION", "CFS_SYNCNODE_STAT",
+			"CFS_SYNCRULE_LIST", "CFS_SYNCRULE_GET",
+			"CFS_SYNCTASK_LIST", "CFS_SYNCTASK_GET", "CFS_SYNCTASK_EXPORT",
+			"CFS_SYNCBACKEND_LIST", "CFS_SYNCBACKEND_CONFIG",
 			"CFS_S3_FILES_LIST", "CFS_S3_FILES_DOWNLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_COMPLETE", "CFS_S3_DIRS_CREATE",
 		},
 	}
@@ -177,6 +185,42 @@ var (
 		// cfs.disks
 		{AuthCode: "CFS_DISKS_DECOMMISSION", AuthName: "decommission disk", AuthType: &backend, URI: prefix + "/cfs/:cluster/disks/decommission", Method: "POST", IsLogin: true, IsCheck: true},
 		{AuthCode: "CFS_DISKS_LIST", AuthName: "list disk", AuthType: &backend, URI: prefix + "/cfs/:cluster/disks/list", Method: "GET", IsLogin: true, IsCheck: true},
+
+		// cfs.syncNode
+		{AuthCode: "CFS_SYNCNODE_LIST", AuthName: "list sync node", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_TASKS", AuthName: "list sync node tasks", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/tasks", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_VERSION", AuthName: "get sync node version", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/version", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_STAT", AuthName: "get sync node stat", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/stat", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_DISPATCH", AuthName: "dispatch sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/dispatch", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_RELOAD", AuthName: "reload sync node", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/reload", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_DECOMMISSION", AuthName: "decommission sync node", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/decommission", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_DRAIN", AuthName: "drain sync node", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/drain", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCNODE_RESTORE", AuthName: "restore sync node", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncNode/restore", Method: "POST", IsLogin: true, IsCheck: true},
+
+		// cfs.syncRule
+		{AuthCode: "CFS_SYNCRULE_LIST", AuthName: "list sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_GET", AuthName: "get sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/get", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_CREATE", AuthName: "create sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/create", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_UPDATE", AuthName: "update sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/update", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_DELETE", AuthName: "delete sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/delete", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_PAUSE", AuthName: "pause sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/pause", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_RESUME", AuthName: "resume sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/resume", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCRULE_TRIGGER", AuthName: "trigger sync rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncRule/trigger", Method: "POST", IsLogin: true, IsCheck: true},
+
+		// cfs.syncTask
+		{AuthCode: "CFS_SYNCTASK_LIST", AuthName: "list sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCTASK_GET", AuthName: "get sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/get", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCTASK_EXPORT", AuthName: "export sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/export", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCTASK_CANCEL", AuthName: "cancel sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/cancel", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCTASK_RETRY", AuthName: "retry sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/retry", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCTASK_DELETE", AuthName: "delete sync task", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncTask/delete", Method: "POST", IsLogin: true, IsCheck: true},
+
+		// cfs.syncStorageBackend
+		{AuthCode: "CFS_SYNCBACKEND_LIST", AuthName: "list sync storage backends", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCBACKEND_CREATE", AuthName: "create sync storage backend", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/create", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCBACKEND_UPDATE", AuthName: "update sync storage backend", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/update", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCBACKEND_DELETE", AuthName: "delete sync storage backend", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/delete", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_SYNCBACKEND_CONFIG", AuthName: "get sync storage backend config", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/config", Method: "GET", IsLogin: true, IsCheck: true},
 
 		// cfs.s3
 		{AuthCode: "CFS_S3_FILES_LIST", AuthName: "list s3 files", AuthType: &backend, URI: prefix + "/cfs/:cluster/s3/files/list", Method: "GET", IsLogin: true, IsCheck: true},

@@ -25,6 +25,10 @@ import (
 	"github.com/cubefs/cubefs-dashboard/backend/handler/metanode"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/metapartition"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/s3"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/syncnode"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/syncrule"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/syncstoragebackend"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/synctask"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/user"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/vol"
 )
@@ -116,5 +120,49 @@ func (c *cfsRouter) Register(engine *gin.Engine) {
 		s3R.GET("/files/upload/multipart/signedUrl", s3.MultiUploadSignedUrl)
 		s3R.POST("/files/upload/multipart/complete", s3.MultiUploadComplete)
 		s3R.POST("/dirs/create", s3.MakeDir)
+	}
+
+	syncNodes := group.Group("/syncNode")
+	{
+		syncNodes.GET("/list", syncnode.List)
+		syncNodes.GET("/tasks", syncnode.Tasks)
+		syncNodes.GET("/version", syncnode.Version)
+		syncNodes.GET("/stat", syncnode.Stat)
+		syncNodes.POST("/dispatch", syncnode.Dispatch)
+		syncNodes.POST("/reload", syncnode.Reload)
+		syncNodes.POST("/decommission", syncnode.Decommission)
+		syncNodes.POST("/drain", syncnode.Drain)
+		syncNodes.POST("/restore", syncnode.Restore)
+	}
+
+	syncRules := group.Group("/syncRule")
+	{
+		syncRules.GET("/list", syncrule.List)
+		syncRules.GET("/get", syncrule.Get)
+		syncRules.POST("/create", syncrule.Create)
+		syncRules.POST("/update", syncrule.Update)
+		syncRules.POST("/delete", syncrule.Delete)
+		syncRules.POST("/pause", syncrule.Pause)
+		syncRules.POST("/resume", syncrule.Resume)
+		syncRules.POST("/trigger", syncrule.Trigger)
+	}
+
+	syncTasks := group.Group("/syncTask")
+	{
+		syncTasks.GET("/list", synctask.List)
+		syncTasks.GET("/get", synctask.Get)
+		syncTasks.GET("/export", synctask.Export)
+		syncTasks.POST("/cancel", synctask.Cancel)
+		syncTasks.POST("/retry", synctask.Retry)
+		syncTasks.POST("/delete", synctask.Delete)
+	}
+
+	syncBackends := group.Group("/syncStorageBackend")
+	{
+		syncBackends.GET("/list", syncstoragebackend.List)
+		syncBackends.POST("/create", syncstoragebackend.Create)
+		syncBackends.POST("/update", syncstoragebackend.Update)
+		syncBackends.POST("/delete", syncstoragebackend.Delete)
+		syncBackends.GET("/config", syncstoragebackend.GetConfig)
 	}
 }

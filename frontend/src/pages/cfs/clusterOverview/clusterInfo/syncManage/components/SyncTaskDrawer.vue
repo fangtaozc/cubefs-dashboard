@@ -1,0 +1,455 @@
+<!--
+ Copyright 2023 The CubeFS Authors.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ implied. See the License for the specific language governing
+ permissions and limitations under the License.
+-->
+
+<template>
+  <el-dialog
+    :visible.sync="innerVisible"
+    width="920px"
+    top="6vh"
+    append-to-body
+    custom-class="sync-task-dialog"
+    @close="handleClose"
+  >
+    <div slot="title" class="dialog-title">
+      <div>
+        <div class="dialog-title__label">{{ $t('sync.tasks') }}</div>
+        <div class="dialog-title__value">{{ taskId }}</div>
+      </div>
+      <el-tag size="small" :type="statusTagType">{{ statusText }}</el-tag>
+    </div>
+    <div class="dialog-body">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-card__label">{{ $t('sync.owner') }}</div>
+          <div class="summary-card__value">
+            <a v-if="ownerText !== '-'" @click="$emit('show-worker', ownerText)">{{ ownerText }}</a>
+            <span v-else>-</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card__label">{{ $t('sync.shardidx') }}</div>
+          <div class="summary-card__value">{{ shardText }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card__label">{{ $t('sync.startedat') }}</div>
+          <div class="summary-card__value">{{ formatTime(task && task.startedAt) }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card__label">{{ $t('sync.doneat') }}</div>
+          <div class="summary-card__value">{{ formatTime(task && task.doneAt) }}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">{{ $t('sync.basicinfo') }}</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item__label">taskID</div>
+            <div class="info-item__value">{{ taskId }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">ruleID</div>
+            <div class="info-item__value">{{ ruleId }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">{{ $t('common.type') }}</div>
+            <div class="info-item__value">{{ typeText }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">{{ $t('sync.state') }}</div>
+            <div class="info-item__value">{{ statusText }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">{{ $t('sync.shardidx') }}</div>
+            <div class="info-item__value">{{ shardIndex }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">{{ $t('sync.shardtotal') }}</div>
+            <div class="info-item__value">{{ shardTotal }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="errorText !== '-'" class="section">
+        <div class="section-title">{{ $t('sync.taskerror') }}</div>
+        <div class="error-panel">{{ errorText }}</div>
+      </div>
+
+      <el-tabs v-model="activeName">
+        <el-tab-pane :label="$t('sync.progress')" name="progress">
+          <div v-if="hasProgress" class="progress-section">
+            <!-- 文件进度 -->
+            <div class="progress-row">
+              <div class="progress-row__header">
+                <span class="progress-row__label">文件</span>
+                <span class="progress-row__value">
+                  {{ task.progress.filesDone }} / {{ task.progress.filesTotal }}
+                </span>
+              </div>
+              <el-progress
+                :percentage="filesPct"
+                :stroke-width="10"
+                :status="progressBarStatus"
+              />
+            </div>
+            <!-- 容量进度 -->
+            <div class="progress-row" style="margin-top: 16px;">
+              <div class="progress-row__header">
+                <span class="progress-row__label">容量</span>
+                <span class="progress-row__value">
+                  {{ formatBytes(task.progress.bytesDone) }} / {{ formatBytes(task.progress.bytesTotal) }}
+                </span>
+              </div>
+              <el-progress
+                :percentage="bytesPct"
+                :stroke-width="10"
+                :status="progressBarStatus"
+              />
+            </div>
+            <!-- 附加统计 -->
+            <div class="progress-stats">
+              <div class="progress-stat">
+                <div class="progress-stat__label">跳过</div>
+                <div class="progress-stat__value">{{ task.progress.filesSkipped }}</div>
+              </div>
+              <div class="progress-stat">
+                <div class="progress-stat__label">失败</div>
+                <div class="progress-stat__value progress-stat__value--danger">{{ task.progress.filesFailed }}</div>
+              </div>
+              <div class="progress-stat">
+                <div class="progress-stat__label">吞吐量</div>
+                <div class="progress-stat__value">{{ throughputText }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-text">
+            {{ isActive ? '任务运行中，暂无进度数据' : '无进度数据' }}
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="$t('sync.rawdetail')" name="raw">
+          <pre class="code-block">{{ taskText }}</pre>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </el-dialog>
+</template>
+
+<script>
+import { formatDate } from '@/utils'
+
+export default {
+  name: 'SyncTaskDrawer',
+  props: {
+    visible: {
+      type: Boolean,
+      default: false,
+    },
+    task: {
+      type: Object,
+      default() {
+        return {}
+      },
+    },
+  },
+  data() {
+    return {
+      innerVisible: false,
+      activeName: 'progress',
+    }
+  },
+  computed: {
+    taskId() {
+      return this.task?.taskID || this.task?.taskId || this.task?.id || '-'
+    },
+    ruleId() {
+      return this.task?.ruleID || this.task?.ruleId || this.task?.request?.ruleId || this.task?.Request?.ruleId || '-'
+    },
+    typeText() {
+      return this.task?.type || this.task?.opcode || '-'
+    },
+    statusText() {
+      return this.task?.status || '-'
+    },
+    ownerText() {
+      return this.task?.owner || '-'
+    },
+    shardIndex() {
+      return this.task?.shardIdx ?? this.task?.shardIndex ?? '-'
+    },
+    shardTotal() {
+      return this.task?.shardTotal ?? '-'
+    },
+    shardText() {
+      if (this.shardIndex === '-' && this.shardTotal === '-') {
+        return '-'
+      }
+      return `${this.shardIndex}/${this.shardTotal}`
+    },
+    errorText() {
+      return this.task?.error || this.task?.lastError || '-'
+    },
+    taskText() {
+      return JSON.stringify(this.task || {}, null, 2)
+    },
+    statusTagType() {
+      const status = `${this.task?.status || ''}`.toLowerCase()
+      if (status === 'running') return 'warning'
+      if (status === 'succeeded') return 'success'
+      if (status === 'failed' || status === 'cancelled' || status === 'cancelling') return 'danger'
+      return 'info'
+    },
+    isActive() {
+      const s = this.task?.status
+      return s === 'running' || s === 'queued'
+    },
+    hasProgress() {
+      const p = this.task?.progress
+      return p && (p.filesTotal > 0 || p.bytesDone > 0)
+    },
+    filesPct() {
+      const p = this.task?.progress
+      if (!p || !p.filesTotal) return 0
+      return Math.min(Math.round((p.filesDone / p.filesTotal) * 100), 100)
+    },
+    bytesPct() {
+      const p = this.task?.progress
+      if (!p || !p.bytesTotal) return 0
+      return Math.min(Math.round((p.bytesDone / p.bytesTotal) * 100), 100)
+    },
+    progressBarStatus() {
+      const s = this.task?.status
+      if (s === 'succeeded') return 'success'
+      if (s === 'failed') return 'exception'
+      if (s === 'cancelled') return 'warning'
+      return null
+    },
+    throughputText() {
+      const v = this.task?.progress?.throughputMBps
+      if (!v && v !== 0) return '-'
+      return `${v.toFixed(1)} MB/s`
+    },
+  },
+  watch: {
+    visible: {
+      immediate: true,
+      handler(val) {
+        this.innerVisible = val
+      },
+    },
+  },
+  methods: {
+    handleClose() {
+      this.activeName = 'progress'
+      this.$emit('update:visible', false)
+    },
+    formatTime(value) {
+      if (!value) return '-'
+      const d = new Date(value)
+      if (isNaN(d.getTime()) || d.getFullYear() < 2000) return '-'
+      return formatDate(value)
+    },
+    formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B'
+      const units = ['B', 'KB', 'MB', 'GB', 'TB']
+      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+      return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
+    },
+  },
+}
+</script>
+
+<style lang="scss" scoped>
+.dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 24px;
+}
+
+.dialog-title__label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.dialog-title__value {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dialog-body {
+  padding-top: 4px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f6faf8 100%);
+}
+
+.summary-card__label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.summary-card__value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-all;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.info-item {
+  min-height: 82px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.info-item__label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.info-item__value {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+  word-break: break-all;
+}
+
+.error-panel {
+  padding: 14px 16px;
+  line-height: 1.6;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 进度区域 */
+.progress-section {
+  padding: 4px 0;
+}
+
+.progress-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.progress-row__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.progress-row__value {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.progress-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.progress-stat__label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.progress-stat__value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+
+  &--danger {
+    color: #dc2626;
+  }
+}
+
+.empty-text {
+  padding: 24px 0;
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* Raw JSON 代码块：浅色背景，深色文字，可读 */
+.code-block {
+  margin: 0;
+  max-height: 360px;
+  padding: 16px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+@media (max-width: 1200px) {
+  .summary-grid,
+  .info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>

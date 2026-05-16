@@ -79,7 +79,7 @@ func (o *OpType) Find(record *bool) ([]OpType, error) {
 	return optypes, err
 }
 
-func (o *OpType) FindByUniqKey(uri, method string) (*OpType, error)  {
+func (o *OpType) FindByUniqKey(uri, method string) (*OpType, error) {
 	if uri == "" || method == "" {
 		return nil, errors.New("uri and method are required")
 	}
@@ -92,6 +92,24 @@ func (o *OpType) FindByUniqKey(uri, method string) (*OpType, error)  {
 func InitOpTypeData(db *gorm.DB) error {
 	optypes := getDefaultOpTypes()
 	return db.CreateInBatches(optypes, len(optypes)).Error
+}
+
+func SyncDefaultOpTypes(db *gorm.DB) error {
+	optypes := getDefaultOpTypes()
+	for _, item := range optypes {
+		temp := make([]OpType, 0)
+		query := db.Model(&OpType{}).Where("uri = ? and method = ?", item.URI, item.Method).Find(&temp)
+		if query.Error != nil {
+			return query.Error
+		}
+		if len(temp) > 0 {
+			continue
+		}
+		if query = db.Create(&item); query.Error != nil {
+			return query.Error
+		}
+	}
+	return nil
 }
 
 func getDefaultOpTypes() []OpType {
@@ -194,6 +212,35 @@ func getDefaultOpTypes() []OpType {
 		// cfs.disks
 		{Method: "POST", URI: prefix + "/cfs/:cluster/disks/decommission", NameEN: "decommission disk", NameCN: "", Record: true},
 		{Method: "GET", URI: prefix + "/cfs/:cluster/disks/list", NameEN: "list disk", NameCN: ""},
+
+		// cfs.syncNode
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncNode/list", NameEN: "list sync nodes", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncNode/tasks", NameEN: "list sync node tasks", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncNode/version", NameEN: "get sync node version", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncNode/stat", NameEN: "get sync node stat", NameCN: ""},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncNode/dispatch", NameEN: "dispatch sync task", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncNode/reload", NameEN: "reload sync node", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncNode/decommission", NameEN: "decommission sync node", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncNode/drain", NameEN: "drain sync node", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncNode/restore", NameEN: "restore sync node", NameCN: "", Record: true},
+
+		// cfs.syncRule
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncRule/list", NameEN: "list sync rules", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncRule/get", NameEN: "get sync rule", NameCN: ""},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/create", NameEN: "create sync rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/update", NameEN: "update sync rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/delete", NameEN: "delete sync rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/pause", NameEN: "pause sync rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/resume", NameEN: "resume sync rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncRule/trigger", NameEN: "trigger sync rule", NameCN: "", Record: true},
+
+		// cfs.syncTask
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncTask/list", NameEN: "list sync tasks", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncTask/get", NameEN: "get sync task", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/syncTask/export", NameEN: "export sync tasks", NameCN: ""},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncTask/cancel", NameEN: "cancel sync task", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncTask/retry", NameEN: "retry sync task", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/syncTask/delete", NameEN: "delete sync task", NameCN: "", Record: true},
 
 		// auth
 		{Method: "POST", URI: prefix + "/auth/login", NameEN: "user login", NameCN: "登录"},

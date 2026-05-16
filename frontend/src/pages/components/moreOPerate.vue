@@ -18,7 +18,9 @@
 
 const renderLi = (h, list) => {
   return list.map(item => {
-    return h('li', {}, [item])
+    return h('li', {
+      class: 'more-operate-li',
+    }, [item])
   })
 }
 export default {
@@ -26,7 +28,7 @@ export default {
   props: {
     count: {
       type: Number,
-      default: 4
+      default: 4,
     },
     title: {
       type: String,
@@ -34,24 +36,24 @@ export default {
     },
     type: {
       type: String,
-      default: 'text'
+      default: 'text',
     },
     poperClass: {
       type: String,
-      default: ''
+      default: '',
     },
     width: {
       type: [String, Number],
-      default: 'auto'
+      default: 'auto',
     },
     visibleArrow: {
       type: Boolean,
-      default: true
+      default: true,
     },
     i18n: {
       type: Object,
       required: true,
-    }
+    },
   },
   render(h, context) {
     const { count, title, type, poperClass, width, visibleArrow, i18n } = context.props
@@ -70,22 +72,37 @@ export default {
           ? h('o-dropdown', {
             class: 'm-l o-dropdown-arrow-text',
             props: {
-              type, poperClass, width, visibleArrow
+              type, poperClass, width, visibleArrow,
             },
             scopedSlots: {
-              header: props => h('span', i18n.t(title) ),
+              header: props => h('span', i18n.t(title)),
               list: props =>
-                h('ul', {}, [...renderLi(h, children.slice(count - 1))])
-            }
+                h('ul', {}, [...renderLi(h, children.slice(count - 1))]),
+            },
           })
-          : ''
-      ]
+          : '',
+      ],
     )
-  }
+  },
 }
 </script>
 <style lang="scss" scoped>
 .m-l {
   margin-left: 5px;
+}
+</style>
+<style lang="scss">
+.more-operate-li {
+  display: block;
+  padding: 0;
+  .el-button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 16px;
+    &:hover {
+      background-color: #f5f7fa;
+    }
+  }
 }
 </style>
