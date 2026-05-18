@@ -126,10 +126,7 @@
             <div class="total-progress-item">
               <div class="total-progress-label">
                 <span>文件</span>
-                <span>
-                  {{ (scope.row.totalProgress.filesDone || 0) + (scope.row.totalProgress.filesSkipped || 0) }}/{{ scope.row.totalProgress.filesTotal }}
-                  <span v-if="scope.row.totalProgress.filesSkipped > 0" class="total-progress-skip-badge">跳过 {{ scope.row.totalProgress.filesSkipped }}</span>
-                </span>
+                <span>{{ (scope.row.totalProgress.filesDone || 0) + (scope.row.totalProgress.filesSkipped || 0) }}/{{ scope.row.totalProgress.filesTotal }}</span>
               </div>
               <el-progress
                 :percentage="scope.row.status === 'succeeded' ? 100 : filesPct(scope.row.totalProgress)"
@@ -142,10 +139,7 @@
             <div class="total-progress-item" style="margin-top: 6px;">
               <div class="total-progress-label">
                 <span>容量</span>
-                <span>
-                  {{ formatBytes(scope.row.totalProgress.bytesDone) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}
-                  <span v-if="scope.row.totalProgress.bytesSkipped > 0" class="total-progress-skip-badge">跳过 {{ formatBytes(scope.row.totalProgress.bytesSkipped) }}</span>
-                </span>
+                <span>{{ formatBytes(scope.row.totalProgress.bytesDone) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}</span>
               </div>
               <el-progress
                 :percentage="bytesPct(scope.row.totalProgress)"
@@ -154,6 +148,14 @@
                 :show-text="false"
                 :class="isTerminalStatus(scope.row.status) ? 'bar-terminal' : ''"
               />
+            </div>
+            <!-- 跳过汇总：文件数 + 字节数放在一行，比嵌入进度数字更醒目 -->
+            <div v-if="scope.row.totalProgress.filesSkipped > 0 || scope.row.totalProgress.bytesSkipped > 0" class="total-skip-summary">
+              <span class="total-skip-label">跳过</span>
+              <span class="total-skip-value">
+                {{ scope.row.totalProgress.filesSkipped }} 个文件
+                <template v-if="scope.row.totalProgress.bytesSkipped > 0"> · {{ formatBytes(scope.row.totalProgress.bytesSkipped) }}</template>
+              </span>
             </div>
             <template v-if="isTerminalStatus(scope.row.status)">
               <div v-if="formatMBps(computedFinalBandwidthMBps(scope.row))" class="total-progress-throughput">
@@ -353,25 +355,26 @@ export default {
         if (!silent) this.loading = false
       }
     },
-    // Silent auto-refresh patches rows in-place so Vue only re-renders changed
-    // cells, avoiding the full-table flash caused by replacing the array reference.
+    // Silent auto-refresh: patch rows in-place and only trigger Vue reactivity
+    // when content actually changed (JSON fingerprint). Rows with identical data
+    // are skipped entirely — no setter calls, no re-render.
     patchDataList(newList) {
       const newById = new Map(newList.map(t => [t.taskID, t]))
       const oldById = new Map(this.dataList.map((t, i) => [t.taskID, i]))
-      // Update existing rows
       for (const [id, item] of newById) {
         const idx = oldById.get(id)
         if (idx !== undefined) {
-          Object.assign(this.dataList[idx], item)
+          const existing = this.dataList[idx]
+          if (JSON.stringify(existing) !== JSON.stringify(item)) {
+            Object.assign(existing, item)
+          }
         }
       }
-      // Remove rows no longer present
       for (let i = this.dataList.length - 1; i >= 0; i--) {
         if (!newById.has(this.dataList[i].taskID)) {
           this.dataList.splice(i, 1)
         }
       }
-      // Append brand-new rows
       for (const item of newList) {
         if (!oldById.has(item.taskID)) {
           this.dataList.push(item)
@@ -724,6 +727,27 @@ export default {
 .total-progress-skip-badge {
   margin-left: 6px;
   font-size: 11px;
+  color: #e6a23c;
+}
+
+.total-skip-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #fdf6ec;
+  font-size: 11px;
+}
+
+.total-skip-label {
+  color: #b87333;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.total-skip-value {
   color: #e6a23c;
 }
 
