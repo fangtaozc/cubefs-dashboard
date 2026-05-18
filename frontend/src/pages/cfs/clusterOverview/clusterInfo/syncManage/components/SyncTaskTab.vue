@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <u-page-table :data="sortedDataList" :page-size="page.per_page" border>
+    <u-page-table :data="sortedDataList" :page-size="page.per_page" row-key="taskID" border>
       <el-table-column label="taskID" min-width="220">
         <template slot-scope="scope">
           <span>{{ getTaskId(scope.row) }}</span>
@@ -344,9 +344,38 @@ export default {
           cluster_name: this.clusterName,
           ...this.localFilters,
         })
-        this.dataList = data || []
+        if (silent) {
+          this.patchDataList(data || [])
+        } else {
+          this.dataList = data || []
+        }
       } finally {
         if (!silent) this.loading = false
+      }
+    },
+    // Silent auto-refresh patches rows in-place so Vue only re-renders changed
+    // cells, avoiding the full-table flash caused by replacing the array reference.
+    patchDataList(newList) {
+      const newById = new Map(newList.map(t => [t.taskID, t]))
+      const oldById = new Map(this.dataList.map((t, i) => [t.taskID, i]))
+      // Update existing rows
+      for (const [id, item] of newById) {
+        const idx = oldById.get(id)
+        if (idx !== undefined) {
+          Object.assign(this.dataList[idx], item)
+        }
+      }
+      // Remove rows no longer present
+      for (let i = this.dataList.length - 1; i >= 0; i--) {
+        if (!newById.has(this.dataList[i].taskID)) {
+          this.dataList.splice(i, 1)
+        }
+      }
+      // Append brand-new rows
+      for (const item of newList) {
+        if (!oldById.has(item.taskID)) {
+          this.dataList.push(item)
+        }
       }
     },
     resetFilters() {
