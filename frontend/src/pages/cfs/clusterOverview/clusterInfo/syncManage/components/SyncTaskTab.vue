@@ -345,7 +345,7 @@ export default {
         const { data } = await getSyncTaskList({
           cluster_name: this.clusterName,
           ...this.localFilters,
-        })
+        }, silent ? { _loading: false } : undefined)
         if (silent) {
           this.patchDataList(data || [])
         } else {

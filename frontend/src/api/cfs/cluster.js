@@ -18,6 +18,16 @@ import Ajax from '../ajax'
 
 const prefix = ({ cluster_name: clusterName }) => `/api/cubefs/console/cfs/${clusterName}/`
 const clusterPrefix = '/api/cubefs/console/'
+const buildQueryString = (params = {}) => {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return
+    }
+    query.append(key, value)
+  })
+  return query.toString()
+}
 // -----------  集群相关  --------------
 
 export const getRegions = (param) => {
@@ -234,4 +244,121 @@ export const setCors = (param) => {
 }
 export const deleteCors = (param) => {
   return Ajax.delete(prefix(param) + 's3/vols/cors/delete', param)
+}
+
+// -----------  Sync Workers  --------------
+export const getSyncNodeList = (param) => {
+  return Ajax.get(prefix(param) + 'syncNode/list', param)
+}
+
+export const getSyncNodeTasks = (param) => {
+  return Ajax.get(prefix(param) + 'syncNode/tasks', param)
+}
+
+export const getSyncNodeVersion = (param) => {
+  return Ajax.get(prefix(param) + 'syncNode/version', param)
+}
+
+export const getSyncNodeStat = (param) => {
+  return Ajax.get(prefix(param) + 'syncNode/stat', param)
+}
+
+export const dispatchSyncTask = (param) => {
+  return Ajax.post(prefix(param) + 'syncNode/dispatch', param)
+}
+
+export const reloadSyncNode = (param) => {
+  return Ajax.post(prefix(param) + 'syncNode/reload', param)
+}
+
+export const drainSyncNode = (param) => {
+  return Ajax.post(prefix(param) + 'syncNode/drain', param)
+}
+
+export const restoreSyncNode = (param) => {
+  return Ajax.post(prefix(param) + 'syncNode/restore', param)
+}
+
+export const decommissionSyncNode = (param) => {
+  return Ajax.post(prefix(param) + 'syncNode/decommission', param)
+}
+
+// -----------  Sync Rules  --------------
+export const getSyncRuleList = (param) => {
+  return Ajax.get(prefix(param) + 'syncRule/list', param)
+}
+
+export const getSyncRule = (param) => {
+  return Ajax.get(prefix(param) + 'syncRule/get', param)
+}
+
+export const createSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/create', param)
+}
+
+export const updateSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/update', param)
+}
+
+export const deleteSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/delete', param)
+}
+
+export const pauseSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/pause', param)
+}
+
+export const resumeSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/resume', param)
+}
+
+export const triggerSyncRule = (param) => {
+  return Ajax.post(prefix(param) + 'syncRule/trigger', param)
+}
+
+// -----------  Sync Tasks  --------------
+export const getSyncTaskList = (param, opt) => {
+  return Ajax.get(prefix(param) + 'syncTask/list', param, opt)
+}
+
+export const getSyncTask = (param) => {
+  return Ajax.get(prefix(param) + 'syncTask/get', param)
+}
+
+export const cancelSyncTask = (param) => {
+  return Ajax.post(prefix(param) + 'syncTask/cancel', param)
+}
+
+export const retrySyncTask = (param) => {
+  return Ajax.post(prefix(param) + 'syncTask/retry', param)
+}
+
+export const deleteSyncTask = (param) => {
+  return Ajax.post(prefix(param) + 'syncTask/delete', param)
+}
+
+export const getSyncTaskExportUrl = ({ cluster_name: clusterName, ...param }) => {
+  const query = buildQueryString(param)
+  return prefix({ cluster_name: clusterName }) + 'syncTask/export' + (query ? `?${query}` : '')
+}
+
+// -----------  Sync Storage Backends  --------------
+export const getSyncStorageBackendList = (param) => {
+  return Ajax.get(prefix(param) + 'syncStorageBackend/list', param)
+}
+
+export const createSyncStorageBackend = (param) => {
+  return Ajax.post(prefix(param) + 'syncStorageBackend/create', param)
+}
+
+export const updateSyncStorageBackend = (param) => {
+  return Ajax.post(prefix(param) + 'syncStorageBackend/update', param)
+}
+
+export const deleteSyncStorageBackend = (param) => {
+  return Ajax.post(prefix(param) + 'syncStorageBackend/delete', param)
+}
+
+export const getSyncStorageBackendConfig = (param) => {
+  return Ajax.get(prefix(param) + 'syncStorageBackend/config', param)
 }
