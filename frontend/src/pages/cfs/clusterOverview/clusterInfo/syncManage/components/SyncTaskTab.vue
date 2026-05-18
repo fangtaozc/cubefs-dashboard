@@ -27,7 +27,8 @@
         <el-button size="small" @click="resetFilters">{{ $t('button.reset') }}</el-button>
       </div>
       <div class="toolbar-actions">
-        <el-button size="small" :loading="loading" icon="el-icon-refresh" @click="loadData">{{ $t('button.refresh') }}</el-button>
+        <span class="live-indicator" title="每秒自动刷新"><span class="live-dot"></span>live</span>
+        <el-button size="small" :loading="loading" icon="el-icon-refresh" @click="loadData()">{{ $t('button.refresh') }}</el-button>
         <el-button
           v-auth="'CFS_SYNCNODE_DISPATCH'"
           type="primary"
@@ -83,19 +84,30 @@
                   disable-transitions
                   class="shard-status-tag"
                 >{{ shard.status }}</el-tag>
+                <el-button
+                  v-if="shard.status === 'failed' && shard.taskID"
+                  v-auth="'CFS_SYNCTASK_RETRY'"
+                  type="text"
+                  size="mini"
+                  class="shard-retry-btn"
+                  @click.stop="retryShardTask(shard.taskID)"
+                >重试</el-button>
               </div>
               <template v-if="shard.progress && shard.progress.filesTotal > 0">
                 <el-progress
-                  :percentage="filesPct(shard.progress)"
+                  :percentage="shard.status === 'succeeded' ? 100 : filesPct(shard.progress)"
                   :stroke-width="5"
                   :status="shardProgressStatus(shard.status, scope.row.status)"
                   :show-text="false"
-                  class="shard-bar"
+                  :class="['shard-bar', isTerminalStatus(shard.status) ? 'bar-terminal' : '']"
                 />
                 <div class="shard-stats">
-                  <span>文件 {{ shard.progress.filesDone }}/{{ shard.progress.filesTotal }}</span>
+                  <span>{{ (shard.progress.filesDone || 0) + (shard.progress.filesSkipped || 0) }}/{{ shard.progress.filesTotal }}</span>
+                  <span v-if="shard.progress.filesSkipped > 0" class="shard-skipped">跳过 {{ shard.progress.filesSkipped }}</span>
                   <span>{{ formatBytes(shard.progress.bytesDone) }}/{{ formatBytes(shard.progress.bytesTotal) }}</span>
-                  <span v-if="formatMBps(shard.progress.throughputMBps)" class="shard-throughput">{{ formatMBps(shard.progress.throughputMBps) }}</span>
+                  <span v-if="shard.progress.bytesSkipped > 0" class="shard-skipped">跳过 {{ formatBytes(shard.progress.bytesSkipped) }}</span>
+                  <span v-if="formatMBps(shard.progress.currentBandwidthMBps)" class="shard-throughput">{{ formatMBps(shard.progress.currentBandwidthMBps) }}</span>
+                  <span v-else-if="formatMBps(shard.progress.throughputMBps)" class="shard-throughput shard-throughput--avg">均 {{ formatMBps(shard.progress.throughputMBps) }}</span>
                 </div>
               </template>
               <div v-else class="shard-pending">
@@ -114,31 +126,51 @@
             <div class="total-progress-item">
               <div class="total-progress-label">
                 <span>文件</span>
-                <span>{{ scope.row.totalProgress.filesDone }}/{{ scope.row.totalProgress.filesTotal }}</span>
+                <span>
+                  {{ (scope.row.totalProgress.filesDone || 0) + (scope.row.totalProgress.filesSkipped || 0) }}/{{ scope.row.totalProgress.filesTotal }}
+                  <span v-if="scope.row.totalProgress.filesSkipped > 0" class="total-progress-skip-badge">跳过 {{ scope.row.totalProgress.filesSkipped }}</span>
+                </span>
               </div>
               <el-progress
-                :percentage="filesPct(scope.row.totalProgress)"
+                :percentage="scope.row.status === 'succeeded' ? 100 : filesPct(scope.row.totalProgress)"
                 :stroke-width="5"
                 :status="progressStatus(scope.row.status)"
                 :show-text="false"
+                :class="isTerminalStatus(scope.row.status) ? 'bar-terminal' : ''"
               />
             </div>
             <div class="total-progress-item" style="margin-top: 6px;">
               <div class="total-progress-label">
                 <span>容量</span>
-                <span>{{ formatBytes(scope.row.totalProgress.bytesDone) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}</span>
+                <span>
+                  {{ formatBytes(scope.row.totalProgress.bytesDone) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}
+                  <span v-if="scope.row.totalProgress.bytesSkipped > 0" class="total-progress-skip-badge">跳过 {{ formatBytes(scope.row.totalProgress.bytesSkipped) }}</span>
+                </span>
               </div>
               <el-progress
                 :percentage="bytesPct(scope.row.totalProgress)"
                 :stroke-width="5"
                 :status="progressStatus(scope.row.status)"
                 :show-text="false"
+                :class="isTerminalStatus(scope.row.status) ? 'bar-terminal' : ''"
               />
             </div>
-            <div v-if="formatMBps(scope.row.totalProgress.throughputMBps)" class="total-progress-throughput">
-              <span class="total-progress-throughput-label">聚合速率</span>
-              <span class="total-progress-throughput-value">{{ formatMBps(scope.row.totalProgress.throughputMBps) }}</span>
-            </div>
+            <template v-if="isTerminalStatus(scope.row.status)">
+              <div v-if="formatMBps(computedFinalBandwidthMBps(scope.row))" class="total-progress-throughput">
+                <span class="total-progress-throughput-label">总传输速率</span>
+                <span class="total-progress-throughput-value total-progress-throughput-value--avg">{{ formatMBps(computedFinalBandwidthMBps(scope.row)) }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <div v-if="formatMBps(scope.row.totalProgress.currentBandwidthMBps)" class="total-progress-throughput">
+                <span class="total-progress-throughput-label">当前速率</span>
+                <span class="total-progress-throughput-value">{{ formatMBps(scope.row.totalProgress.currentBandwidthMBps) }}</span>
+              </div>
+              <div v-if="formatMBps(scope.row.totalProgress.throughputMBps)" class="total-progress-throughput total-progress-throughput--avg">
+                <span class="total-progress-throughput-label">均速</span>
+                <span class="total-progress-throughput-value total-progress-throughput-value--avg">{{ formatMBps(scope.row.totalProgress.throughputMBps) }}</span>
+              </div>
+            </template>
           </template>
           <span v-else class="no-progress-text">
             {{ isActive(scope.row.status) ? '列举中…' : '-' }}
@@ -295,10 +327,8 @@ export default {
   },
   mounted() {
     this.refreshTimer = setInterval(() => {
-      if (this.hasActiveTasks) {
-        this.loadData()
-      }
-    }, 5000)
+      this.loadData(true)
+    }, 1000)
   },
   beforeDestroy() {
     if (this.refreshTimer) {
@@ -307,8 +337,8 @@ export default {
     }
   },
   methods: {
-    async loadData() {
-      this.loading = true
+    async loadData(silent = false) {
+      if (!silent) this.loading = true
       try {
         const { data } = await getSyncTaskList({
           cluster_name: this.clusterName,
@@ -316,7 +346,7 @@ export default {
         })
         this.dataList = data || []
       } finally {
-        this.loading = false
+        if (!silent) this.loading = false
       }
     },
     resetFilters() {
@@ -346,7 +376,8 @@ export default {
     },
     filesPct(progress) {
       if (!progress || !progress.filesTotal) return 0
-      return Math.min(Math.round((progress.filesDone / progress.filesTotal) * 100), 100)
+      const processed = (progress.filesDone || 0) + (progress.filesSkipped || 0)
+      return Math.min(Math.round((processed / progress.filesTotal) * 100), 100)
     },
     bytesPct(progress) {
       if (!progress || !progress.bytesTotal) return 0
@@ -367,6 +398,15 @@ export default {
         return (parentStatus === 'running' || parentStatus === 'queued') ? 'warning' : 'exception'
       }
       return null
+    },
+    isTerminalStatus(status) {
+      return status === 'succeeded' || status === 'failed' || status === 'cancelled'
+    },
+    computedFinalBandwidthMBps(row) {
+      if (!row?.startedAt || !row?.doneAt || !row?.totalProgress?.bytesDone) return null
+      const elapsed = (new Date(row.doneAt) - new Date(row.startedAt)) / 1000
+      if (elapsed <= 0) return null
+      return row.totalProgress.bytesDone / 1024 / 1024 / elapsed
     },
     isActive(status) {
       return status === 'running' || status === 'queued'
@@ -442,19 +482,30 @@ export default {
       this.$message.success(this.$t('sync.retrytask') + this.$t('common.xxsuc'))
       this.loadData()
     },
+    async retryShardTask(shardTaskID) {
+      await retrySyncTask({
+        cluster_name: this.clusterName,
+        id: shardTaskID,
+      })
+      this.$message.success(this.$t('sync.retrytask') + this.$t('common.xxsuc'))
+      this.loadData()
+    },
     async deleteTask(row) {
       const id = this.getTaskId(row)
       try {
-        await this.$confirm(this.$t('common.confirmDelete') || `确认删除任务 ${id}?`, this.$t('common.tip') || '提示', {
-          type: 'warning',
-        })
+        await this.$confirm(
+          `${this.$t('common.confirmto')}${this.$t('common.delete')} ${id}？`,
+          this.$t('common.notice'),
+          {
+            confirmButtonText: this.$t('common.yes'),
+            cancelButtonText: this.$t('common.no'),
+            type: 'warning',
+          },
+        )
       } catch {
         return
       }
-      await deleteSyncTask({
-        cluster_name: this.clusterName,
-        id,
-      })
+      await deleteSyncTask({ cluster_name: this.clusterName, id })
       this.$message.success(this.$t('common.delete') + this.$t('common.xxsuc'))
       this.loadData()
     },
@@ -511,6 +562,30 @@ export default {
   gap: 8px;
 }
 
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #67c23a;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #67c23a;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
 .filters ::v-deep .el-input,
 .filters ::v-deep .el-select {
   width: 180px;
@@ -551,8 +626,27 @@ export default {
   flex-shrink: 0;
 }
 
+.shard-retry-btn {
+  flex-shrink: 0;
+  padding: 0;
+  font-size: 11px;
+  color: #e6a23c;
+
+  &:hover {
+    color: #cf9236;
+  }
+}
+
 .shard-bar {
   margin-bottom: 2px;
+
+  ::v-deep .el-progress-bar__inner {
+    transition: width 4.5s linear;
+  }
+}
+
+.bar-terminal ::v-deep .el-progress-bar__inner {
+  transition: none !important;
 }
 
 .shard-stats {
@@ -562,9 +656,18 @@ export default {
   color: #909399;
 }
 
+.shard-skipped {
+  color: #e6a23c;
+  flex-shrink: 0;
+}
+
 .shard-throughput {
   color: #409eff;
   flex-shrink: 0;
+
+  &--avg {
+    color: #909399;
+  }
 }
 
 .shard-pending {
@@ -576,6 +679,10 @@ export default {
 /* 总进度 */
 .total-progress-item {
   font-size: 12px;
+
+  ::v-deep .el-progress-bar__inner {
+    transition: width 4.5s linear;
+  }
 }
 
 .total-progress-label {
@@ -585,12 +692,22 @@ export default {
   margin-bottom: 3px;
 }
 
+.total-progress-skip-badge {
+  margin-left: 6px;
+  font-size: 11px;
+  color: #e6a23c;
+}
+
 .total-progress-throughput {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
   margin-top: 5px;
+
+  &--avg {
+    margin-top: 2px;
+  }
 }
 
 .total-progress-throughput-label {
@@ -600,6 +717,11 @@ export default {
 .total-progress-throughput-value {
   color: #409eff;
   font-weight: 500;
+
+  &--avg {
+    color: #909399;
+    font-weight: 400;
+  }
 }
 
 .no-progress-text {

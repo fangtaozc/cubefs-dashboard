@@ -91,18 +91,31 @@
       <el-tabs v-model="activeName">
         <el-tab-pane :label="$t('sync.progress')" name="progress">
           <div v-if="hasProgress" class="progress-section">
+            <!-- 带宽摘要 -->
+            <div class="bw-row">
+              <div v-if="currentBandwidthText" class="bw-card bw-card--current">
+                <div class="bw-card__label">当前速率</div>
+                <div class="bw-card__value">{{ currentBandwidthText }}</div>
+              </div>
+              <div v-if="throughputText !== '-'" class="bw-card" :class="currentBandwidthText ? 'bw-card--avg' : ''">
+                <div class="bw-card__label">{{ progressBarStatus !== null ? '总传输速率' : '平均带宽' }}</div>
+                <div class="bw-card__value">{{ throughputText }}</div>
+              </div>
+            </div>
             <!-- 文件进度 -->
             <div class="progress-row">
               <div class="progress-row__header">
                 <span class="progress-row__label">文件</span>
                 <span class="progress-row__value">
-                  {{ task.progress.filesDone }} / {{ task.progress.filesTotal }}
+                  {{ (task.progress.filesDone || 0) + (task.progress.filesSkipped || 0) }} / {{ task.progress.filesTotal }}
+                  <span v-if="task.progress.filesSkipped > 0" class="progress-row__skip">（跳过 {{ task.progress.filesSkipped }}）</span>
                 </span>
               </div>
               <el-progress
                 :percentage="filesPct"
                 :stroke-width="10"
                 :status="progressBarStatus"
+                :class="progressBarStatus !== null ? 'bar-terminal' : ''"
               />
             </div>
             <!-- 容量进度 -->
@@ -117,21 +130,22 @@
                 :percentage="bytesPct"
                 :stroke-width="10"
                 :status="progressBarStatus"
+                :class="progressBarStatus !== null ? 'bar-terminal' : ''"
               />
             </div>
             <!-- 附加统计 -->
             <div class="progress-stats">
               <div class="progress-stat">
-                <div class="progress-stat__label">跳过</div>
+                <div class="progress-stat__label">跳过文件</div>
                 <div class="progress-stat__value">{{ task.progress.filesSkipped }}</div>
+              </div>
+              <div v-if="task.progress.bytesSkipped > 0" class="progress-stat">
+                <div class="progress-stat__label">跳过容量</div>
+                <div class="progress-stat__value">{{ formatBytes(task.progress.bytesSkipped) }}</div>
               </div>
               <div class="progress-stat">
                 <div class="progress-stat__label">失败</div>
                 <div class="progress-stat__value progress-stat__value--danger">{{ task.progress.filesFailed }}</div>
-              </div>
-              <div class="progress-stat">
-                <div class="progress-stat__label">吞吐量</div>
-                <div class="progress-stat__value">{{ throughputText }}</div>
               </div>
             </div>
           </div>
@@ -222,7 +236,9 @@ export default {
     filesPct() {
       const p = this.task?.progress
       if (!p || !p.filesTotal) return 0
-      return Math.min(Math.round((p.filesDone / p.filesTotal) * 100), 100)
+      if (this.task?.status === 'succeeded') return 100
+      const processed = (p.filesDone || 0) + (p.filesSkipped || 0)
+      return Math.min(Math.round((processed / p.filesTotal) * 100), 100)
     },
     bytesPct() {
       const p = this.task?.progress
@@ -237,9 +253,34 @@ export default {
       return null
     },
     throughputText() {
+      // For terminal tasks compute from wall-clock time (more reliable than stored value)
+      if (this.progressBarStatus !== null) {
+        const v = this.finalAvgBandwidthMBps
+        if (v && v > 0) {
+          if (v >= 1) return `${v.toFixed(1)} MB/s`
+          return `${(v * 1024).toFixed(0)} KB/s`
+        }
+        return '-'
+      }
       const v = this.task?.progress?.throughputMBps
-      if (!v && v !== 0) return '-'
-      return `${v.toFixed(1)} MB/s`
+      if (!v || v <= 0) return '-'
+      if (v >= 1) return `${v.toFixed(1)} MB/s`
+      return `${(v * 1024).toFixed(0)} KB/s`
+    },
+    currentBandwidthText() {
+      // Hide current bandwidth for terminal tasks (task has ended)
+      if (this.progressBarStatus !== null) return null
+      const v = this.task?.progress?.currentBandwidthMBps
+      if (!v || v <= 0) return null
+      if (v >= 1) return `${v.toFixed(1)} MB/s`
+      return `${(v * 1024).toFixed(0)} KB/s`
+    },
+    finalAvgBandwidthMBps() {
+      const task = this.task
+      if (!task?.startedAt || !task?.doneAt || !task?.progress?.bytesDone) return null
+      const elapsed = (new Date(task.doneAt) - new Date(task.startedAt)) / 1000
+      if (elapsed <= 0) return null
+      return task.progress.bytesDone / 1024 / 1024 / elapsed
     },
   },
   watch: {
@@ -375,6 +416,49 @@ export default {
   padding: 4px 0;
 }
 
+/* 带宽摘要行 */
+.bw-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bw-card {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+
+  &--current {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
+  &--avg {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+}
+
+.bw-card__label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.bw-card__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1d4ed8;
+
+  .bw-card--avg & {
+    font-size: 18px;
+    color: #374151;
+    font-weight: 600;
+  }
+}
+
 .progress-row__header {
   display: flex;
   justify-content: space-between;
@@ -391,6 +475,11 @@ export default {
 .progress-row__value {
   font-size: 13px;
   color: #6b7280;
+}
+
+.progress-row__skip {
+  font-size: 12px;
+  color: #e6a23c;
 }
 
 .progress-stats {
@@ -423,6 +512,10 @@ export default {
   }
 }
 
+.bar-terminal ::v-deep .el-progress-bar__inner {
+  transition: none !important;
+}
+
 .empty-text {
   padding: 24px 0;
   font-size: 13px;
@@ -431,8 +524,7 @@ export default {
 }
 
 /* Raw JSON 代码块：浅色背景，深色文字，可读 */
-.code-block {
-  margin: 0;
+.code-block {  margin: 0;
   max-height: 360px;
   padding: 16px;
   overflow: auto;
