@@ -129,7 +129,7 @@
                 <span>{{ (scope.row.totalProgress.filesDone || 0) + (scope.row.totalProgress.filesSkipped || 0) }}/{{ scope.row.totalProgress.filesTotal }}</span>
               </div>
               <el-progress
-                :percentage="scope.row.status === 'succeeded' ? 100 : filesPct(scope.row.totalProgress)"
+                :percentage="filePctSafe(scope.row)"
                 :stroke-width="5"
                 :status="progressStatus(scope.row.status)"
                 :show-text="false"
@@ -139,23 +139,15 @@
             <div class="total-progress-item" style="margin-top: 6px;">
               <div class="total-progress-label">
                 <span>容量</span>
-                <span>{{ formatBytes(scope.row.totalProgress.bytesDone) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}</span>
+                <span>{{ formatBytes((scope.row.totalProgress.bytesDone || 0) + (scope.row.totalProgress.bytesSkipped || 0)) }}/{{ formatBytes(scope.row.totalProgress.bytesTotal) }}</span>
               </div>
               <el-progress
-                :percentage="bytesPct(scope.row.totalProgress)"
+                :percentage="bytePctSafe(scope.row)"
                 :stroke-width="5"
                 :status="progressStatus(scope.row.status)"
                 :show-text="false"
                 :class="isTerminalStatus(scope.row.status) ? 'bar-terminal' : ''"
               />
-            </div>
-            <!-- 跳过汇总：文件数 + 字节数放在一行，比嵌入进度数字更醒目 -->
-            <div v-if="scope.row.totalProgress.filesSkipped > 0 || scope.row.totalProgress.bytesSkipped > 0" class="total-skip-summary">
-              <span class="total-skip-label">跳过</span>
-              <span class="total-skip-value">
-                {{ scope.row.totalProgress.filesSkipped }} 个文件
-                <template v-if="scope.row.totalProgress.bytesSkipped > 0"> · {{ formatBytes(scope.row.totalProgress.bytesSkipped) }}</template>
-              </span>
             </div>
             <template v-if="isTerminalStatus(scope.row.status)">
               <div v-if="formatMBps(computedFinalBandwidthMBps(scope.row))" class="total-progress-throughput">
@@ -177,6 +169,19 @@
           <span v-else class="no-progress-text">
             {{ isActive(scope.row.status) ? '列举中…' : '-' }}
           </span>
+        </template>
+      </el-table-column>
+
+      <!-- 跳过 -->
+      <el-table-column label="跳过" min-width="130">
+        <template slot-scope="scope">
+          <template v-if="scope.row.totalProgress && scope.row.totalProgress.filesSkipped > 0">
+            <div class="skip-cell">
+              <span class="skip-cell__files">{{ scope.row.totalProgress.filesSkipped }} 个文件</span>
+              <span v-if="scope.row.totalProgress.bytesSkipped > 0" class="skip-cell__bytes">{{ formatBytes(scope.row.totalProgress.bytesSkipped) }}</span>
+            </div>
+          </template>
+          <span v-else class="no-progress-text">-</span>
         </template>
       </el-table-column>
 
@@ -240,6 +245,7 @@ import {
   cancelSyncTask,
   deleteSyncTask,
   dispatchSyncTask,
+  getSyncRule,
   getSyncTask,
   getSyncTaskExportUrl,
   getSyncTaskList,
@@ -349,24 +355,42 @@ export default {
         if (silent) {
           this.patchDataList(data || [])
         } else {
-          this.dataList = data || []
+          this.dataList = (data || []).map(item => this.withPeaks(item))
         }
       } finally {
         if (!silent) this.loading = false
       }
     },
+    // withPeaks attaches _filePeak/_bytePeak to a fresh item. Called when
+    // inserting new rows so Vue 2 observes these fields from the start.
+    withPeaks(item) {
+      return {
+        ...item,
+        _filePeak: this.isActive(item.status) ? this.filesPct(item.totalProgress) : 0,
+        _bytePeak: this.isActive(item.status) ? this.bytesPct(item.totalProgress) : 0,
+      }
+    },
     // Silent auto-refresh: patch rows in-place and only trigger Vue reactivity
-    // when content actually changed (JSON fingerprint). Rows with identical data
-    // are skipped entirely — no setter calls, no re-render.
+    // when server content actually changed. Private _-prefixed fields are excluded
+    // from the fingerprint so peak state doesn't cause spurious re-renders.
     patchDataList(newList) {
+      const sig = obj => JSON.stringify(obj, (k, v) => k.startsWith('_') ? undefined : v)
       const newById = new Map(newList.map(t => [t.taskID, t]))
       const oldById = new Map(this.dataList.map((t, i) => [t.taskID, i]))
       for (const [id, item] of newById) {
         const idx = oldById.get(id)
         if (idx !== undefined) {
           const existing = this.dataList[idx]
-          if (JSON.stringify(existing) !== JSON.stringify(item)) {
+          if (sig(existing) !== sig(item)) {
             Object.assign(existing, item)
+          }
+          // Update high-water marks for running tasks to prevent backward oscillation
+          // when filesTotal/bytesTotal grow during scan phase.
+          if (this.isActive(existing.status) && existing.totalProgress) {
+            const fp = this.filesPct(existing.totalProgress)
+            const bp = this.bytesPct(existing.totalProgress)
+            if (fp > existing._filePeak) existing._filePeak = fp
+            if (bp > existing._bytePeak) existing._bytePeak = bp
           }
         }
       }
@@ -377,7 +401,7 @@ export default {
       }
       for (const item of newList) {
         if (!oldById.has(item.taskID)) {
-          this.dataList.push(item)
+          this.dataList.push(this.withPeaks(item))
         }
       }
     },
@@ -413,7 +437,20 @@ export default {
     },
     bytesPct(progress) {
       if (!progress || !progress.bytesTotal) return 0
-      return Math.min(Math.round((progress.bytesDone / progress.bytesTotal) * 100), 100)
+      const processed = (progress.bytesDone || 0) + (progress.bytesSkipped || 0)
+      return Math.min(Math.round((processed / progress.bytesTotal) * 100), 100)
+    },
+    // Safe wrappers: for running tasks, clamp to high-water-mark to prevent
+    // backward oscillation when filesTotal grows during scan phase.
+    filePctSafe(row) {
+      if (row.status === 'succeeded') return 100
+      const current = this.filesPct(row.totalProgress)
+      return this.isActive(row.status) ? Math.max(row._filePeak || 0, current) : current
+    },
+    bytePctSafe(row) {
+      if (row.status === 'succeeded') return 100
+      const current = this.bytesPct(row.totalProgress)
+      return this.isActive(row.status) ? Math.max(row._bytePeak || 0, current) : current
     },
     progressStatus(status) {
       if (status === 'succeeded') return 'success'
@@ -495,7 +532,20 @@ export default {
         cluster_name: this.clusterName,
         id: this.getTaskId(row),
       })
-      this.detailRecord = data || {}
+      const record = data || {}
+      const ruleId = record.ruleID || record.ruleId || row.ruleID || row.ruleId || ''
+      if (ruleId) {
+        try {
+          const { data: ruleData } = await getSyncRule({ cluster_name: this.clusterName, id: ruleId })
+          // SyncRule响应结构: { config: { src, dst, ... }, state, ... }；取 config 层供 Drawer 访问 src/dst
+          record._ruleConfig = ruleData?.config || null
+        } catch (_) {
+          record._ruleConfig = null
+        }
+      }
+      // 把列表行中已聚合的分片数据附到 record，供 Drawer 分片详情 tab 使用
+      record._shards = row.shards || []
+      this.detailRecord = record
       this.detailVisible = true
     },
     async cancelTask(row) {
@@ -781,6 +831,24 @@ export default {
   font-size: 12px;
   color: #c0c4cc;
   font-style: italic;
+}
+
+/* 跳过列 */
+.skip-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skip-cell__files {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e6a23c;
+}
+
+.skip-cell__bytes {
+  font-size: 11px;
+  color: #b87333;
 }
 
 /* 可排序列标题 */

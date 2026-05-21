@@ -258,6 +258,12 @@ func doMasterJSON(c *gin.Context, method, path string, values url.Values, body i
 	return doJSONRequest(c, upstreamMaster, method, "http://"+leaderAddr, path, values, body, string(cluster.SyncAdminToken))
 }
 
+// DoMasterJSONRequest is an exported helper for other packages (e.g. bench service) that
+// need to forward a request to the cluster master and parse the JSON response.
+func DoMasterJSONRequest(c *gin.Context, method, baseURL, path string, values url.Values, body interface{}, token string) (interface{}, error) {
+	return doJSONRequest(c, upstreamMaster, method, baseURL, path, values, body, token)
+}
+
 func doNodeJSON(c *gin.Context, method, syncNodeAddr, path string, body interface{}) (interface{}, error) {
 	cluster, err := ResolveCluster(c)
 	if err != nil {

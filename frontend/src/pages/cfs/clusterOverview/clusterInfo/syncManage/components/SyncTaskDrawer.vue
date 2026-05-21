@@ -31,18 +31,7 @@
       <el-tag size="small" :type="statusTagType">{{ statusText }}</el-tag>
     </div>
     <div class="dialog-body">
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-card__label">{{ $t('sync.owner') }}</div>
-          <div class="summary-card__value">
-            <a v-if="ownerText !== '-'" @click="$emit('show-worker', ownerText)">{{ ownerText }}</a>
-            <span v-else>-</span>
-          </div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card__label">{{ $t('sync.shardidx') }}</div>
-          <div class="summary-card__value">{{ shardText }}</div>
-        </div>
+      <div class="summary-grid summary-grid--2col">
         <div class="summary-card">
           <div class="summary-card__label">{{ $t('sync.startedat') }}</div>
           <div class="summary-card__value">{{ formatTime(task && task.startedAt) }}</div>
@@ -50,6 +39,33 @@
         <div class="summary-card">
           <div class="summary-card__label">{{ $t('sync.doneat') }}</div>
           <div class="summary-card__value">{{ formatTime(task && task.doneAt) }}</div>
+        </div>
+      </div>
+
+      <div v-if="hasDataFlow" class="section">
+        <div class="section-title">{{ $t('sync.datapath') }}</div>
+        <div class="dataflow-row">
+          <div class="dataflow-ep">
+            <div class="dataflow-ep__kind" :class="`dataflow-ep__kind--${srcConfig.kind}`">{{ srcConfig.kind.toUpperCase() }}</div>
+            <div class="dataflow-ep__name">{{ srcConfig.name }}</div>
+            <div v-if="srcConfig.sub" class="dataflow-ep__sub">{{ srcConfig.sub }}</div>
+            <div v-else class="dataflow-ep__sub dataflow-ep__sub--muted">（根目录）</div>
+          </div>
+          <div class="dataflow-connector" :class="flowConnectorClass">
+            <div class="dataflow-connector__track">
+              <div class="dataflow-connector__fill"></div>
+              <div v-if="isActive" class="dataflow-connector__shine"></div>
+            </div>
+            <svg class="dataflow-connector__arrowhead" width="12" height="12" viewBox="0 0 12 12">
+              <polygon points="0,0 12,6 0,12" :fill="arrowColor"/>
+            </svg>
+          </div>
+          <div class="dataflow-ep">
+            <div class="dataflow-ep__kind" :class="`dataflow-ep__kind--${dstConfig.kind}`">{{ dstConfig.kind.toUpperCase() }}</div>
+            <div class="dataflow-ep__name">{{ dstConfig.name }}</div>
+            <div v-if="dstConfig.sub" class="dataflow-ep__sub">{{ dstConfig.sub }}</div>
+            <div v-else class="dataflow-ep__sub dataflow-ep__sub--muted">（根目录）</div>
+          </div>
         </div>
       </div>
 
@@ -71,14 +87,6 @@
           <div class="info-item">
             <div class="info-item__label">{{ $t('sync.state') }}</div>
             <div class="info-item__value">{{ statusText }}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-item__label">{{ $t('sync.shardidx') }}</div>
-            <div class="info-item__value">{{ shardIndex }}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-item__label">{{ $t('sync.shardtotal') }}</div>
-            <div class="info-item__value">{{ shardTotal }}</div>
           </div>
         </div>
       </div>
@@ -123,7 +131,7 @@
               <div class="progress-row__header">
                 <span class="progress-row__label">容量</span>
                 <span class="progress-row__value">
-                  {{ formatBytes(task.progress.bytesDone) }} / {{ formatBytes(task.progress.bytesTotal) }}
+                  {{ formatBytes((task.progress.bytesDone || 0) + (task.progress.bytesSkipped || 0)) }} / {{ formatBytes(task.progress.bytesTotal) }}
                 </span>
               </div>
               <el-progress
@@ -152,6 +160,90 @@
           <div v-else class="empty-text">
             {{ isActive ? '任务运行中，暂无进度数据' : '无进度数据' }}
           </div>
+        </el-tab-pane>
+
+        <el-tab-pane
+          v-if="shards.length > 0"
+          :label="`分片详情 (${shards.length})`"
+          name="shards"
+        >
+          <el-table :data="shardsPagedData" size="small" border class="shard-detail-table">
+            <el-table-column label="分片" width="60" align="center">
+              <template slot-scope="scope">
+                <span>{{ scope.row.shardIdx ?? scope.$index + (shardCurrentPage - 1) * shardPageSize }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="执行节点" min-width="150">
+              <template slot-scope="scope">
+                <a v-if="scope.row.owner" class="shard-owner-link" @click="$emit('show-worker', scope.row.owner)">{{ scope.row.owner }}</a>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="shardTagType(scope.row.status)" size="mini" disable-transitions>{{ scope.row.status || '-' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="文件(完成/总)" min-width="130">
+              <template slot-scope="scope">
+                <template v-if="scope.row.progress && scope.row.progress.filesTotal > 0">
+                  <span>{{ (scope.row.progress.filesDone || 0) + (scope.row.progress.filesSkipped || 0) }} / {{ scope.row.progress.filesTotal }}</span>
+                </template>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="容量(完成/总)" min-width="160">
+              <template slot-scope="scope">
+                <template v-if="scope.row.progress && scope.row.progress.bytesTotal > 0">
+                  <span>{{ formatBytes((scope.row.progress.bytesDone || 0) + (scope.row.progress.bytesSkipped || 0)) }} / {{ formatBytes(scope.row.progress.bytesTotal) }}</span>
+                </template>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="跳过文件" width="90" align="right">
+              <template slot-scope="scope">
+                <span v-if="scope.row.progress && scope.row.progress.filesSkipped > 0" class="skip-num">{{ scope.row.progress.filesSkipped }}</span>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="跳过容量" width="100" align="right">
+              <template slot-scope="scope">
+                <span v-if="scope.row.progress && scope.row.progress.bytesSkipped > 0" class="skip-num">{{ formatBytes(scope.row.progress.bytesSkipped) }}</span>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="失败" width="70" align="right">
+              <template slot-scope="scope">
+                <span v-if="scope.row.progress && scope.row.progress.filesFailed > 0" class="fail-num">{{ scope.row.progress.filesFailed }}</span>
+                <span v-else class="muted">-</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div v-if="shards.length > shardPageSize" class="shard-pagination">
+            <el-pagination
+              :current-page.sync="shardCurrentPage"
+              :page-size="shardPageSize"
+              :total="shards.length"
+              layout="total, prev, pager, next"
+              small
+            />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane
+          v-if="skippedSamples.length > 0"
+          :label="`跳过的文件 (${skippedSamples.length}${task.progress && task.progress.filesSkipped > skippedSamples.length ? '+' : ''})`"
+          name="skipped"
+        >
+          <div class="skipped-note">
+            共跳过 {{ task.progress && task.progress.filesSkipped || 0 }} 个文件（目标已存在且内容一致）。
+            <span v-if="task.progress && task.progress.filesSkipped > skippedSamples.length">
+              以下为前 {{ skippedSamples.length }} 条样本：
+            </span>
+          </div>
+          <ul class="skipped-list">
+            <li v-for="(key, i) in skippedSamples" :key="i" class="skipped-item">{{ key }}</li>
+          </ul>
         </el-tab-pane>
         <el-tab-pane :label="$t('sync.rawdetail')" name="raw">
           <pre class="code-block">{{ taskText }}</pre>
@@ -182,6 +274,8 @@ export default {
     return {
       innerVisible: false,
       activeName: 'progress',
+      shardCurrentPage: 1,
+      shardPageSize: 5,
     }
   },
   computed: {
@@ -243,7 +337,7 @@ export default {
     bytesPct() {
       const p = this.task?.progress
       if (!p || !p.bytesTotal) return 0
-      return Math.min(Math.round((p.bytesDone / p.bytesTotal) * 100), 100)
+      return Math.min(Math.round(((p.bytesDone || 0) + (p.bytesSkipped || 0)) / p.bytesTotal * 100), 100)
     },
     progressBarStatus() {
       const s = this.task?.status
@@ -282,6 +376,42 @@ export default {
       if (elapsed <= 0) return null
       return task.progress.bytesDone / 1024 / 1024 / elapsed
     },
+    skippedSamples() {
+      return this.task?.progress?.skippedSamples || []
+    },
+    shards() {
+      return this.task?._shards || []
+    },
+    shardsPagedData() {
+      const start = (this.shardCurrentPage - 1) * this.shardPageSize
+      return this.shards.slice(start, start + this.shardPageSize)
+    },
+    hasDataFlow() {
+      const rc = this.task?._ruleConfig
+      return !!(rc?.src?.kind && rc?.dst?.kind)
+    },
+    srcConfig() {
+      return this._epConfig(this.task?._ruleConfig?.src)
+    },
+    dstConfig() {
+      return this._epConfig(this.task?._ruleConfig?.dst)
+    },
+    flowConnectorClass() {
+      const s = (this.task?.status || '').toLowerCase()
+      if (s === 'running') return 'dataflow-connector--running'
+      if (s === 'succeeded') return 'dataflow-connector--success'
+      if (s === 'failed') return 'dataflow-connector--failed'
+      if (s === 'cancelled' || s === 'cancelling') return 'dataflow-connector--cancelled'
+      return ''
+    },
+    arrowColor() {
+      const s = (this.task?.status || '').toLowerCase()
+      if (s === 'running') return '#3b82f6'
+      if (s === 'succeeded') return '#16a34a'
+      if (s === 'failed') return '#dc2626'
+      if (s === 'cancelled' || s === 'cancelling') return '#d97706'
+      return '#9ca3af'
+    },
   },
   watch: {
     visible: {
@@ -294,7 +424,30 @@ export default {
   methods: {
     handleClose() {
       this.activeName = 'progress'
+      this.shardCurrentPage = 1
       this.$emit('update:visible', false)
+    },
+    shardTagType(status) {
+      const map = { queued: 'info', running: '', succeeded: 'success', failed: 'danger', cancelled: 'warning', cancelling: 'warning' }
+      return map[status] ?? 'info'
+    },
+    _epConfig(ep) {
+      if (!ep) return { kind: '?', name: '-', sub: '' }
+      const kind = ep.kind || '?'
+      let name = '-'
+      let sub = ''
+      if (kind === 's3' || kind === 'tos' || kind === 'bos') {
+        name = ep.bucket || '-'
+        sub = ep.prefix ? ep.prefix : ''
+      } else if (kind === 'cfs') {
+        name = ep.vol || '-'
+        sub = ep.path || ''
+      } else if (kind === 'local') {
+        name = ep.path || '-'
+      } else {
+        name = ep.bucket || ep.vol || ep.path || '-'
+      }
+      return { kind, name, sub }
     },
     formatTime(value) {
       if (!value) return '-'
@@ -313,6 +466,117 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 数据路径可视化 */
+.dataflow-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #fafafa 50%, #f0fdf4 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.dataflow-ep {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.dataflow-ep__kind {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  border-radius: 4px;
+  color: #fff;
+  background: #6b7280;
+
+  &--s3, &--tos, &--bos { background: #f97316; }
+  &--cfs { background: #2563eb; }
+  &--local { background: #059669; }
+}
+
+.dataflow-ep__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.dataflow-ep__sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #374151;
+  font-family: monospace;
+  word-break: break-all;
+
+  &--muted {
+    color: #9ca3af;
+    font-style: italic;
+    font-family: inherit;
+  }
+}
+
+/* 连接器：流动动画轨道 + 箭头 */
+.dataflow-connector {
+  flex: 0 0 80px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 8px;
+}
+
+.dataflow-connector__track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.dataflow-connector__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: #e5e7eb;
+  transition: background 0.3s;
+}
+
+.dataflow-connector--running .dataflow-connector__fill { background: #bfdbfe; }
+.dataflow-connector--success .dataflow-connector__fill { background: #bbf7d0; }
+.dataflow-connector--failed .dataflow-connector__fill { background: #fecaca; }
+.dataflow-connector--cancelled .dataflow-connector__fill { background: #fed7aa; }
+
+.dataflow-connector__shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,.75) 50%, transparent 100%);
+  animation: flow-shine 1.3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes flow-shine {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(290%); }
+}
+
+.dataflow-connector__arrowhead {
+  flex: 0 0 12px;
+  display: block;
+}
+
 .dialog-title {
   display: flex;
   align-items: center;
@@ -341,6 +605,10 @@ export default {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 20px;
+
+  &--2col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .summary-card {
@@ -536,6 +804,75 @@ export default {
   border-radius: 10px;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* 跳过文件列表 */
+.skipped-note {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.skipped-list {
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.skipped-item {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #374151;
+  border-bottom: 1px solid #f1f5f9;
+  word-break: break-all;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:nth-child(odd) {
+    background: #f8fafc;
+  }
+}
+
+/* 分片详情表格 */
+.shard-detail-table {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.shard-owner-link {
+  color: #409eff;
+  cursor: pointer;
+  word-break: break-all;
+
+  &:hover {
+    color: #337ecc;
+  }
+}
+
+.muted {
+  color: #c0c4cc;
+}
+
+.skip-num {
+  color: #e6a23c;
+}
+
+.fail-num {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.shard-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 @media (max-width: 1200px) {

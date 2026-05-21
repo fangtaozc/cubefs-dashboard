@@ -42,6 +42,22 @@
           <span>{{ getConfig(scope.row, 'type') }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="数据路径" min-width="220">
+        <template slot-scope="scope">
+          <span v-if="scope.row.config && scope.row.config.src && scope.row.config.dst" class="datapath-cell">
+            <span class="datapath-ep">
+              <el-tag size="mini" :type="kindTagType(scope.row.config.src.kind)" disable-transitions>{{ scope.row.config.src.kind || '?' }}</el-tag>
+              <span class="datapath-name">{{ epName(scope.row.config.src) }}</span>
+            </span>
+            <span class="datapath-arrow">→</span>
+            <span class="datapath-ep">
+              <el-tag size="mini" :type="kindTagType(scope.row.config.dst.kind)" disable-transitions>{{ scope.row.config.dst.kind || '?' }}</el-tag>
+              <span class="datapath-name">{{ epName(scope.row.config.dst) }}</span>
+            </span>
+          </span>
+          <span v-else class="datapath-empty">-</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('sync.state')" prop="state" min-width="100"></el-table-column>
       <el-table-column :label="$t('sync.schedule')" min-width="160">
         <template slot-scope="scope">
@@ -72,7 +88,7 @@
       <el-table-column :label="$t('common.action')" min-width="300">
         <template slot-scope="scope">
           <MoreOPerate :count="4" :i18n="$i18n">
-            <el-button type="text" @click="emitViewTasks(getConfig(scope.row, 'id'))">{{ $t('sync.viewtasks') }}</el-button>
+            <el-button type="text" @click="openView(scope.row)">{{ $t('common.detail') }}</el-button>
             <el-button v-auth="'CFS_SYNCRULE_TRIGGER'" type="text" @click="triggerRule(scope.row)">{{ $t('sync.trigger') }}</el-button>
             <el-button v-auth="'CFS_SYNCRULE_UPDATE'" type="text" @click="openEdit(scope.row)">{{ $t('common.edit') }}</el-button>
             <el-button
@@ -95,13 +111,17 @@
     <SyncRuleCreateDialog
       :visible.sync="createDialogVisible"
       :cluster-name="clusterName"
+      :mode="editRow ? 'edit' : 'create'"
+      :config="editRow ? editRow.config : null"
       @confirm="handleCreateConfirm"
+      @close="editRow = null"
     />
-    <SyncRuleEditorDialog
-      :visible.sync="editDialogVisible"
-      mode="edit"
-      :value="editorValue"
-      @confirm="handleEditConfirm"
+    <SyncRuleCreateDialog
+      :visible.sync="viewDialogVisible"
+      :cluster-name="clusterName"
+      mode="view"
+      :config="viewRow ? viewRow.config : null"
+      @close="viewRow = null"
     />
   </div>
 </template>
@@ -119,14 +139,12 @@ import {
   triggerSyncRule,
   updateSyncRule,
 } from '@/api/cfs/cluster'
-import SyncRuleEditorDialog from './SyncRuleEditorDialog.vue'
 import SyncRuleCreateDialog from './SyncRuleCreateDialog.vue'
 
 export default {
   name: 'SyncRuleTab',
   components: {
     MoreOPerate,
-    SyncRuleEditorDialog,
     SyncRuleCreateDialog,
     UPageTable,
   },
@@ -144,8 +162,9 @@ export default {
       },
       states: ['active', 'paused', 'degraded'],
       createDialogVisible: false,
-      editDialogVisible: false,
-      editorValue: '',
+      editRow: null,
+      viewDialogVisible: false,
+      viewRow: null,
       page: {
         per_page: 10,
       },
@@ -175,12 +194,26 @@ export default {
       if (isNaN(d.getTime()) || d.getFullYear() < 2000) return '-'
       return formatDate(value)
     },
+    epName(ep) {
+      if (!ep) return '-'
+      const name = ep.bucket || ep.vol || ep.path || '-'
+      return name
+    },
+    kindTagType(kind) {
+      const map = { cfs: '', s3: 'warning', tos: 'warning', bos: 'warning', local: 'success' }
+      return map[kind] ?? 'info'
+    },
     openCreate() {
+      this.editRow = null
       this.createDialogVisible = true
     },
     openEdit(row) {
-      this.editorValue = JSON.stringify(row?.config || {}, null, 2)
-      this.editDialogVisible = true
+      this.editRow = row
+      this.createDialogVisible = true
+    },
+    openView(row) {
+      this.viewRow = row
+      this.viewDialogVisible = true
     },
     emitViewTasks(ruleID) {
       this.$emit('view-tasks', ruleID)
@@ -193,27 +226,20 @@ export default {
         this.$message.error(this.$t('common.failed') + ': JSON parse error')
         return
       }
-      await createSyncRule({ cluster_name: this.clusterName, ...body })
-      this.$message.success(this.$t('common.create') + this.$t('common.xxsuc'))
+      if (this.editRow) {
+        await updateSyncRule({ cluster_name: this.clusterName, ...body })
+        this.$message.success(this.$t('common.edit') + this.$t('common.xxsuc'))
+        this.editRow = null
+      } else {
+        await createSyncRule({ cluster_name: this.clusterName, ...body })
+        this.$message.success(this.$t('common.create') + this.$t('common.xxsuc'))
+        if (runImmediately && body.id) {
+          await triggerSyncRule({ cluster_name: this.clusterName, id: body.id })
+          this.$message.success(this.$t('sync.trigger') + this.$t('common.xxsuc'))
+          this.emitViewTasks(body.id)
+        }
+      }
       this.createDialogVisible = false
-      if (runImmediately && body.id) {
-        await triggerSyncRule({ cluster_name: this.clusterName, id: body.id })
-        this.$message.success(this.$t('sync.trigger') + this.$t('common.xxsuc'))
-        this.emitViewTasks(body.id)
-      }
-      this.loadData()
-    },
-    async handleEditConfirm(text) {
-      let body = null
-      try {
-        body = JSON.parse(text)
-      } catch (_) {
-        this.$message.error(this.$t('common.failed') + ': JSON parse error')
-        return
-      }
-      await updateSyncRule({ cluster_name: this.clusterName, ...body })
-      this.$message.success(this.$t('common.edit') + this.$t('common.xxsuc'))
-      this.editDialogVisible = false
       this.loadData()
     },
     async triggerRule(row) {
@@ -270,5 +296,42 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.datapath-cell {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.datapath-ep {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
+.datapath-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #303133;
+  max-width: 80px;
+}
+
+.datapath-arrow {
+  flex-shrink: 0;
+  color: #909399;
+  font-weight: 600;
+  padding: 0 2px;
+}
+
+.datapath-empty {
+  color: #c0c4cc;
 }
 </style>
