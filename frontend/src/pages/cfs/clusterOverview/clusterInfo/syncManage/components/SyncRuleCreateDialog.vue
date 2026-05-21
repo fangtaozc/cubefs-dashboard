@@ -135,7 +135,13 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item v-if="form.srcKind === 'local'" label="Src 路径">
-            <el-input v-model.trim="form.srcPath" placeholder="/data/source/" clearable :disabled="isViewMode"></el-input>
+            <MountPathSelect
+              v-model="form.srcPath"
+              :options="mountPathOptions"
+              :disabled="isViewMode"
+              placeholder="/data/source/  （选择已挂载路径或自行输入）"
+              hint="候选来自 syncnode 实际容器内的挂载点；选中后仍可继续编辑或清空。"
+            />
           </el-form-item>
           <el-form-item v-if="form.srcKind === 'cubefs'" label="卷名">
             <el-select v-model="form.srcVolume" filterable clearable placeholder="选择或输入卷名" style="width: 100%;" :disabled="isViewMode">
@@ -168,7 +174,13 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item v-if="form.dstKind === 'local'" label="Dst 路径">
-            <el-input v-model.trim="form.dstPath" placeholder="/data/dest/" clearable :disabled="isViewMode"></el-input>
+            <MountPathSelect
+              v-model="form.dstPath"
+              :options="mountPathOptions"
+              :disabled="isViewMode"
+              placeholder="/data/dest/  （选择已挂载路径或自行输入）"
+              hint="候选来自 syncnode 实际容器内的挂载点；选中后仍可继续编辑或清空。"
+            />
           </el-form-item>
           <el-form-item v-if="form.dstKind === 'cubefs'" label="卷名">
             <el-select v-model="form.dstVolume" filterable clearable placeholder="选择或输入卷名" style="width: 100%;" :disabled="isViewMode">
@@ -218,7 +230,8 @@
 </template>
 
 <script>
-import { getSyncStorageBackendConfig, getSyncStorageBackendList, getVolList } from '@/api/cfs/cluster'
+import { getSyncStorageBackendConfig, getSyncStorageBackendList, getSyncNodeList, getVolList } from '@/api/cfs/cluster'
+import MountPathSelect from '@/components/MountPathSelect.vue'
 
 const emptyForm = () => ({
   id: '',
@@ -252,6 +265,7 @@ const emptyForm = () => ({
 
 export default {
   name: 'SyncRuleCreateDialog',
+  components: { MountPathSelect },
   props: {
     visible: {
       type: Boolean,
@@ -279,6 +293,8 @@ export default {
       backends: [],
       backendConfigs: {},
       volumes: [],
+      // populated by loadMountPaths(); shared between Src/Dst MountPathSelect
+      mountPathOptions: { cubefs: [], external: [] },
       submitting: false,
     }
   },
@@ -346,7 +362,7 @@ export default {
         this.editorValue = ''
         this.activeTab = 'form'
       }
-      await Promise.all([this.loadBackends(), this.loadVolumes()])
+      await Promise.all([this.loadBackends(), this.loadVolumes(), this.loadMountPaths()])
       if ((this.isEditMode || this.isViewMode) && this.config) {
         this.editorValue = JSON.stringify(this.config, null, 2)
         this.fillFormFromConfig(this.config)
@@ -371,6 +387,38 @@ export default {
         this.volumes = data || []
       } catch (_) {
         this.volumes = []
+      }
+    },
+    // 与测试管理 BenchRuleCreateDialog 保持一致：从所有在线 syncnode 拉取容器内
+    // 实际挂载点，按 (path, fsType) 去重，fuse.cubefs 进 "CubeFS 卷" 分组，
+    // 其他（本地 / GPFS / NFS 等）进 "本地 / GPFS / 其他" 分组。
+    async loadMountPaths() {
+      try {
+        const { data } = await getSyncNodeList({ cluster_name: this.clusterName })
+        const nodes = Array.isArray(data) ? data : (data?.data || [])
+        const seen = new Set()
+        const cubefs = []
+        const external = []
+        for (const n of nodes) {
+          const mps = (n && n.mountPoints) || []
+          for (const m of mps) {
+            if (!m || !m.path) continue
+            const key = m.path + '|' + (m.fsType || '')
+            if (seen.has(key)) continue
+            seen.add(key)
+            const entry = { path: m.path, fsType: m.fsType || '' }
+            if ((m.fsType || '').toLowerCase().startsWith('fuse.cubefs')) {
+              cubefs.push(entry)
+            } else {
+              external.push(entry)
+            }
+          }
+        }
+        cubefs.sort((a, b) => a.path.localeCompare(b.path))
+        external.sort((a, b) => a.path.localeCompare(b.path))
+        this.mountPathOptions = { cubefs, external }
+      } catch (_) {
+        this.mountPathOptions = { cubefs: [], external: [] }
       }
     },
     buildStorageConfig(side) {

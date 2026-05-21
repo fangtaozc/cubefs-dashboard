@@ -201,39 +201,11 @@
           <el-row :gutter="16">
             <el-col :span="24">
               <el-form-item :label="$t('bench.mountpath')" prop="mountPath">
-                <el-select
+                <MountPathSelect
                   v-model="form.mountPath"
-                  filterable
-                  allow-create
-                  default-first-option
-                  clearable
-                  style="width: 100%"
-                  placeholder="选择已挂载路径，或自行输入"
-                >
-                  <el-option-group v-if="mountPathOptions.cubefs.length" label="CubeFS 卷">
-                    <el-option
-                      v-for="m in mountPathOptions.cubefs"
-                      :key="'cfs-' + m.path"
-                      :label="m.path"
-                      :value="m.path"
-                    >
-                      <span>{{ m.path }}</span>
-                      <span style="float:right;color:#909399;font-size:12px;">{{ m.fsType }}</span>
-                    </el-option>
-                  </el-option-group>
-                  <el-option-group v-if="mountPathOptions.external.length" label="本地 / GPFS / 其他">
-                    <el-option
-                      v-for="m in mountPathOptions.external"
-                      :key="'ext-' + m.path"
-                      :label="m.path"
-                      :value="m.path"
-                    >
-                      <span>{{ m.path }}</span>
-                      <span style="float:right;color:#909399;font-size:12px;">{{ m.fsType || '未知' }}</span>
-                    </el-option>
-                  </el-option-group>
-                </el-select>
-                <div class="form-hint">候选来自 syncnode 实际容器内的挂载点；未在列表中的路径可直接键入。</div>
+                  :options="mountPathOptions"
+                  hint="候选来自 syncnode 实际容器内的挂载点；未在列表中的路径可直接键入。"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -401,39 +373,11 @@
           <el-row :gutter="16">
             <el-col :span="24">
               <el-form-item :label="$t('bench.mountpath')" prop="mountPath">
-                <el-select
+                <MountPathSelect
                   v-model="form.mountPath"
-                  filterable
-                  allow-create
-                  default-first-option
-                  clearable
-                  style="width: 100%"
-                  placeholder="选择已挂载路径，或自行输入"
-                >
-                  <el-option-group v-if="mountPathOptions.cubefs.length" label="CubeFS 卷">
-                    <el-option
-                      v-for="m in mountPathOptions.cubefs"
-                      :key="'cfs-' + m.path"
-                      :label="m.path"
-                      :value="m.path"
-                    >
-                      <span>{{ m.path }}</span>
-                      <span style="float:right;color:#909399;font-size:12px;">{{ m.fsType }}</span>
-                    </el-option>
-                  </el-option-group>
-                  <el-option-group v-if="mountPathOptions.external.length" label="本地 / GPFS / 其他">
-                    <el-option
-                      v-for="m in mountPathOptions.external"
-                      :key="'ext-' + m.path"
-                      :label="m.path"
-                      :value="m.path"
-                    >
-                      <span>{{ m.path }}</span>
-                      <span style="float:right;color:#909399;font-size:12px;">{{ m.fsType || '未知' }}</span>
-                    </el-option>
-                  </el-option-group>
-                </el-select>
-                <div class="form-hint">mdtest 通过 mpirun 在多个 shard 间分发，所有 shard 必须看到同一份共享 FS。</div>
+                  :options="mountPathOptions"
+                  hint="mdtest 通过 mpirun 在多个 shard 间分发，所有 shard 必须看到同一份共享 FS。"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -570,6 +514,7 @@
 
 <script>
 import { createBenchRule, updateBenchRule, getSyncStorageBackendList, getSyncNodeList } from '@/api/cfs/cluster'
+import MountPathSelect from '@/components/MountPathSelect.vue'
 
 const OP_TYPES = ['put', 'get', 'delete', 'head', 'list']
 const DIST_OPTIONS = [
@@ -771,6 +716,7 @@ function humanSize(bytes) {
 
 export default {
   name: 'BenchRuleCreateDialog',
+  components: { MountPathSelect },
   props: {
     visible: { type: Boolean, default: false },
     clusterName: { type: String, required: true },
