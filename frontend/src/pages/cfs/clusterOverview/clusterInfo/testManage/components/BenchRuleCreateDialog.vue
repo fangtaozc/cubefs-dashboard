@@ -932,15 +932,10 @@ export default {
       }
     },
     generateRuleId() {
-      // Strip a leading "bench-" / "bench" the user may have typed in
-      // the rule name — the system already prepends "bench-" to identify
-      // bench-rule IDs, so without this dedup we'd produce
-      // `bench-bench-smoke-test-001-…` for a rule named "bench smoke test 001".
-      let slug = (this.form.name || '')
+      const slug = (this.form.name || '')
         .toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30)
-      slug = slug.replace(/^bench(-|$)/, '').replace(/^-+/, '')
       const ts = Date.now().toString(36)
-      return slug ? `bench-${slug}-${ts}` : `bench-${ts}`
+      return slug ? `${slug}-${ts}` : ts
     },
     resetForm() {
       this.form = {
