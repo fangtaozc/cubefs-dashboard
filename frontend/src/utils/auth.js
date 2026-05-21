@@ -14,9 +14,6 @@
  * permissions and limitations under the License.
  */
 
-import { Message } from 'element-ui'
-
-
 function checkValue(arr, key, value) {
   for (let i = 0; i < arr.length; i++) {
     if (arr[i][key] === value) {
@@ -77,6 +74,28 @@ export function getCodeList(that) {
     {
       title: that.$t('auth.meta'),
       children: ['CFS_METANODE_DECOMMISSION', 'CFS_METANODE_MIGRATE', 'CFS_METAPARTITION_DECOMMISSION'],
+    },
+    {
+      title: that.$t('auth.sync'),
+      children: [
+        'CFS_SYNCNODE_LIST', 'CFS_SYNCNODE_TASKS', 'CFS_SYNCNODE_VERSION', 'CFS_SYNCNODE_STAT', 'CFS_SYNCNODE_DISPATCH', 'CFS_SYNCNODE_RELOAD', 'CFS_SYNCNODE_DECOMMISSION', 'CFS_SYNCNODE_DRAIN', 'CFS_SYNCNODE_RESTORE',
+        'CFS_SYNCRULE_LIST', 'CFS_SYNCRULE_GET', 'CFS_SYNCRULE_CREATE', 'CFS_SYNCRULE_UPDATE', 'CFS_SYNCRULE_DELETE', 'CFS_SYNCRULE_PAUSE', 'CFS_SYNCRULE_RESUME', 'CFS_SYNCRULE_TRIGGER',
+        'CFS_SYNCTASK_LIST', 'CFS_SYNCTASK_GET', 'CFS_SYNCTASK_CANCEL', 'CFS_SYNCTASK_RETRY', 'CFS_SYNCTASK_EXPORT',
+        'CFS_SYNCBACKEND_LIST', 'CFS_SYNCBACKEND_CREATE', 'CFS_SYNCBACKEND_UPDATE', 'CFS_SYNCBACKEND_DELETE', 'CFS_SYNCBACKEND_CONFIG',
+      ],
+    },
+    {
+      title: that.$t('auth.bench'),
+      children: [
+        'CFS_BENCHRULE_LIST', 'CFS_BENCHRULE_GET', 'CFS_BENCHRULE_CREATE', 'CFS_BENCHRULE_UPDATE', 'CFS_BENCHRULE_DELETE', 'CFS_BENCHRULE_TRIGGER',
+        'CFS_BENCHTASK_LIST', 'CFS_BENCHTASK_GET', 'CFS_BENCHTASK_CANCEL', 'CFS_BENCHTASK_RETRY',
+      ],
+    },
+    {
+      title: that.$t('auth.posixcheck'),
+      children: [
+        'CFS_POSIXCHECK_LIST', 'CFS_POSIXCHECK_GET', 'CFS_POSIXCHECK_RUN', 'CFS_POSIXCHECK_CANCEL',
+      ],
     },
     {
       title: that.$t('auth.file'),

@@ -26,7 +26,7 @@
       <div v-if="activeName === 'partition'" class="flex">
         <span class="fontType"><span>{{ $t('common.total') }}{{ $t('common.nodes') }}:</span> <span class="mg-lf-m"></span>{{ info.node }}</span>
         <span class="fontType mg-lf-m"><span>{{ $t('common.total') }}{{ $t('common.partitions') }}:</span> <span class="mg-lf-m"></span>{{ info.partition }}</span>
-        <span class="fontType mg-lf-m"><span>{{ $t('common.broken') }}{{ $t('common.partitions') }}:</span> <span class="mg-lf-m"></span><span class="bad_partition" @click="showDialog('DP' + this.$t('common.status'))">{{ badDataPartitionNum }}</span>/{{ (badDataPartitionNum / info.partition * 100).toFixed()+'%' || '0%' }}</span>
+        <span class="fontType mg-lf-m"><span>{{ $t('common.broken') }}{{ $t('common.partitions') }}:</span> <span class="mg-lf-m"></span><span class="bad_partition" @click="showDialog('DP' + $t('common.status'))">{{ badDataPartitionNum }}</span>/{{ (badDataPartitionNum / info.partition * 100).toFixed()+'%' || '0%' }}</span>
         <span class="fontType mg-lf-m"><span>{{ $t('common.total') }}{{ $t('common.size') }}:</span> <span class="mg-lf-m"></span>{{ info.total |renderSize }}</span>
         <div class="mg-lf-m progress">
           <span>{{ info.used |renderSize }}/{{ (info.used/info.total*100).toFixed(0)+'%' }}</span>

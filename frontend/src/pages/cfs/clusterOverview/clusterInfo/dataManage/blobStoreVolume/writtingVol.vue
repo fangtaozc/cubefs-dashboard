@@ -95,16 +95,10 @@ import { getWrittingVolList } from '@/api/ebs/ebs'
 import { readablizeBytes, getType } from '@/utils'
 import { volStatusMap } from '@/pages/cfs/status.conf'
 import moment from 'moment'
-import mixin from '@/pages/cfs/clusterOverview/mixin';
+import mixin from '@/pages/cfs/clusterOverview/mixin'
 export default {
   components: {
     UTablePage,
-  },
-  mixins: [mixin],
-  props: {
-    clusterId: {
-      type: Number,
-    }
   },
   filters: {
     readablizeBytes(value) {
@@ -118,6 +112,12 @@ export default {
     },
     fTime(v) {
       return moment(+v / 1000000).format('YYYY-MM-DD HH:mm:ss')
+    },
+  },
+  mixins: [mixin],
+  props: {
+    clusterId: {
+      type: Number,
     },
   },
   data() {

@@ -39,8 +39,7 @@ const RouterViewHoc = {
   },
 }
 
-
-const DEFAULT_TITLE = 'DEFAULT_TITLE';
+const DEFAULT_TITLE = 'DEFAULT_TITLE'
 
 const router = new Router({
   mode: 'history',
@@ -76,7 +75,7 @@ const router = new Router({
               name: 'userManage',
               meta: {
                 // title: '用户管理',
-                title:  'router.user',
+                title: 'router.user',
               },
               component: () => import('@/pages/authManage/user/index'),
             },
@@ -85,7 +84,7 @@ const router = new Router({
               name: 'roleManage',
               meta: {
                 // title: '角色管理',
-                title: 'router.role' ,
+                title: 'router.role',
               },
               component: () => import('@/pages/authManage/role/index'),
             },

@@ -108,7 +108,7 @@
       </UTablePage>
     </el-row>
     <el-row v-if="showWhich==='writing'">
-      <WritingVol @changeShow="changeShow" :clusterId="clusterId"/>
+      <WritingVol :cluster-id="clusterId" @changeShow="changeShow" />
     </el-row>
     <el-drawer :destroy-on-close="true" :visible.sync="drawer" size="80%" :before-close="handleClose" :title="$t('resource.stripedetail')">
       <div v-if="$route.query.vid ||$route.query.disk_id" slot="title" class="TitleFontType">
@@ -138,11 +138,6 @@ export default {
     volumnDetail,
     nodeDetail,
   },
-  provide() {
-    return {
-      app: this
-    }
-  },
   filters: {
     readablizeBytes(value) {
       return readablizeBytes(value)
@@ -153,6 +148,11 @@ export default {
       )?.[0]
       return temp?.[0]
     },
+  },
+  provide() {
+    return {
+      app: this,
+    }
   },
   data() {
     return {
@@ -189,7 +189,7 @@ export default {
         }
       },
       immediate: true,
-    }
+    },
   },
   created() {
   },

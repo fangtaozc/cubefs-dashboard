@@ -204,14 +204,19 @@ import { readablizeBytes } from '@/utils'
 import { nodeStatusMap } from '@/pages/cfs/status.conf'
 import UTablePage from '@/components/uPageTable.vue'
 import DiskRepairStatus from '@/components/diskRepairStatus'
-import mixin from '@/pages/cfs/clusterOverview/mixin';
+import mixin from '@/pages/cfs/clusterOverview/mixin'
 export default {
   components: {
     UTablePage,
     DiskRepairStatus,
   },
-  inject: ['app'],
+  filters: {
+    readablizeBytes(value) {
+      return readablizeBytes(value)
+    },
+  },
   mixins: [mixin],
+  inject: ['app'],
   props: {
     diskArr: {
       type: Array,
@@ -237,11 +242,6 @@ export default {
     },
     showHost() {
       return this.$route.query.host
-    },
-  },
-  filters: {
-    readablizeBytes(value) {
-      return readablizeBytes(value)
     },
   },
   created() {
@@ -374,7 +374,7 @@ export default {
     async changeRW({ disk_id, readonly }) {
       try {
         await this.$confirm(
-          this.$t('resource.setdiskstatus')+ `${readonly ?  this.$t('common.rw'): this.$t('common.ro')}?`,
+          this.$t('resource.setdiskstatus') + `${readonly ? this.$t('common.rw') : this.$t('common.ro')}?`,
           this.$t('common.notice'),
           {
             confirmButtonText: this.$t('common.yes'),

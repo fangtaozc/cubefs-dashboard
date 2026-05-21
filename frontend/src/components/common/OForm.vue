@@ -35,7 +35,7 @@ const getPrefix = (tag, lib) => {
     col: 'i-col',
     'input-number': 'input-number',
     cascader: 'cascader',
-    text: 'text'
+    text: 'text',
   }
   const elementMap = {
     form: 'el-form',
@@ -56,7 +56,7 @@ const getPrefix = (tag, lib) => {
     col: 'el-col',
     'input-number': 'el-input-number',
     cascader: 'el-cascader',
-    text: 'text'
+    text: 'text',
   }
   return lib === 'iview' ? iviewMap[tag] : elementMap[tag]
 }
@@ -66,111 +66,111 @@ export default {
     // grid 间距
     gutter: {
       type: Number,
-      default: 30
+      default: 30,
     },
     // span 间距
     span: {
       type: Number,
-      default: 8
+      default: 8,
     },
     // formItem 项
     formList: {
       type: [Array, Object],
       required: true,
-      default: () => []
+      default: () => [],
     },
     // 是否显示整个控制按钮
     notCtrl: {
       type: Boolean,
-      default: false
+      default: false,
     },
     // 是否开启 input 标签默认
     enterSubmit: {
       type: Boolean,
-      default: false
+      default: false,
     },
     // 默认 ui 库
     lib: {
       type: String,
-      default: 'element'
+      default: 'element',
     },
     // 默认标签宽度
     labelWidth: {
       type: [Number, String],
-      default: 120
+      default: 120,
     },
     // 默认内容宽度
     // eslint-disable-next-line vue/require-default-prop
     contentWidth: {
-      type: [Number, String]
+      type: [Number, String],
       // default: 240
     },
     // submit 按钮文本
     submitText: {
       type: String,
-      default: '提交'
+      default: '提交',
     },
     // 重置按钮文本
     resetText: {
       type: String,
-      default: '重置'
+      default: '重置',
     },
     // 是否拥有 提交 按钮
     hasSubmitBtn: {
       type: Boolean,
-      default: true
+      default: true,
     },
     // 是否拥有 重置 按钮
     hasResetBtn: {
       type: Boolean,
-      default: true
+      default: true,
     },
     // 原生 form 标签上的 props
     options: {
       type: Object,
       default() {
         return {}
-      }
+      },
     },
     // 开启全局 clearable
     clearable: {
       type: Boolean,
-      default: true
+      default: true,
     },
     // 文本框默认字符个数
     // eslint-disable-next-line vue/require-default-prop
     maxlength: {
-      type: [Number, String]
+      type: [Number, String],
     },
     // 多行文本框默认字符个数
     textareaMaxlength: {
       type: Number,
-      default: 256
+      default: 256,
     },
     // 是否全局 disabled
     disabled: {
       type: Boolean,
-      default: false
+      default: false,
     },
     // sync功能
     formValue: {
       type: Object,
       default() {
         return {}
-      }
+      },
     },
     // 表单实例对象
     formRef: {
       type: Object,
       default() {
         return {}
-      }
-    }
+      },
+    },
   },
   data() {
     return {
       form: this.initForm(),
-      rules: this.initRules()
+      rules: this.initRules(),
     }
   },
   watch: {
@@ -179,14 +179,14 @@ export default {
       immediate: true,
       handler(val) {
         this.setForm(val)
-      }
+      },
     },
     formList: {
       deep: true,
       handler(val) {
         this.rules = this.initRules()
-      }
-    }
+      },
+    },
   },
   mounted() {
     this.$emit('update:formRef', this)
@@ -225,7 +225,7 @@ export default {
         switch: false,
         'input-number': 0,
         cascader: [],
-        text: ''
+        text: '',
       }
       const res = {}
       this.traversBy(this.formList, item => {
@@ -265,7 +265,7 @@ export default {
           return this.getConditionItem(
             h,
             formList,
-            this.getFormItem(h, formList, this.getContent(h, formList))
+            this.getFormItem(h, formList, this.getContent(h, formList)),
           )
         }
       } else {
@@ -278,20 +278,20 @@ export default {
               const childrenItem = this.getFormItem(
                 h,
                 item,
-                this.getContent(h, item)
+                this.getContent(h, item),
               )
               const childrenParts = h(
                 getPrefix('col', this.lib),
                 {
                   props: {
-                    span: item.span || this.span
-                  }
+                    span: item.span || this.span,
+                  },
                 },
-                [childrenItem]
+                [childrenItem],
               )
               return this.getConditionItem(h, item, childrenParts)
             }
-          })
+          }),
         )
       }
     },
@@ -313,10 +313,10 @@ export default {
         getPrefix('row', this.lib),
         {
           props: {
-            gutter: this.gutter
-          }
+            gutter: this.gutter,
+          },
         },
-        childrenList
+        childrenList,
       )
     },
     getContent(h, item) {
@@ -383,52 +383,56 @@ export default {
       } else {
         const settings = {
           props: {
-            prop: item.key
-          }
+            prop: item.key,
+          },
         }
         return h(
           getPrefix('form-item', this.lib),
           Object.assign(
             settings,
             {
-              class: [item.showTips ? 'has-tips-icon' : '']
+              class: [item.showTips ? 'has-tips-icon' : ''],
             },
-            item.settings
+            item.settings,
           ),
           [
             this.renderTitle(h, item, this.form),
             h(
               'div',
               {
-                class: 'form-item-content-inner'
+                class: 'form-item-content-inner',
               },
-              [content]
+              [content],
             ),
-            item.showTips ? this.renderTips(item.tipsText, item, this.form) : ''
-          ]
+            item.showTips ? this.renderTips(item.tipsText, item, this.form) : '',
+          ],
         )
       }
     },
     // 先表单项后面渲染小问号
     renderTips(title, item) {
-      return item.tipsType === 'bottom' ? (
+      return item.tipsType === 'bottom'
+        ? (
         <p class="form-item-bottom-tips">{title}</p>
-      ) : (
+          )
+        : (
         <el-tooltip placement="top" content={title} class="question">
           <i class="el-icon-question" />
         </el-tooltip>
-      )
+          )
     },
     // 渲染 title
     renderTitle(h, item) {
       return (
         <span slot="label">
           {item.required === true ? <span style="color: font">*</span> : ''}
-          {typeof item.renderTitle === 'function' ? (
+          {typeof item.renderTitle === 'function'
+            ? (
             <span>{item.renderTitle(h, item, this.form)}</span>
-          ) : (
+              )
+            : (
             <span>{item.title}</span>
-          )}
+              )}
         </span>
       )
     },
@@ -444,14 +448,14 @@ export default {
             getPrefix('button', this.lib),
             {
               props: {
-                type: 'primary'
+                type: 'primary',
               },
               on: {
-                click: this.submit
-              }
+                click: this.submit,
+              },
             },
-            this.submitText
-          )
+            this.submitText,
+          ),
         )
       }
       if (this.hasResetBtn) {
@@ -460,14 +464,14 @@ export default {
             getPrefix('button', this.lib),
             {
               style: {
-                'margin-left': '10px'
+                'margin-left': '10px',
               },
               on: {
-                click: this.reset
-              }
+                click: this.reset,
+              },
             },
-            this.resetText
-          )
+            this.resetText,
+          ),
         )
       }
       return h(getPrefix('form-item', this.lib), btns)
@@ -494,7 +498,7 @@ export default {
         tagName: getPrefix('input', this.lib),
         props: {
           clearable: this.clearable,
-          ...props
+          ...props,
         },
         nativeOn: {
           keydown: e => {
@@ -505,8 +509,8 @@ export default {
             ) {
               this.submit()
             }
-          }
-        }
+          },
+        },
       }
       return this.generateTag(tag)
     },
@@ -518,7 +522,7 @@ export default {
         tagName: getPrefix('select', this.lib),
         props: {
           clearable: this.clearable,
-          ...(item.props || {})
+          ...(item.props || {}),
         },
         children: item.options.map(option => {
           return h(
@@ -527,16 +531,16 @@ export default {
               props: {
                 label: option.text,
                 value: option.value,
-                ...(item.optionProps || {})
-              }
+                ...(item.optionProps || {}),
+              },
             },
             [
               typeof item.renderOption === 'function'
                 ? item.renderOption(h, option, item)
-                : item.text
-            ]
+                : item.text,
+            ],
           )
-        })
+        }),
       }
       return this.generateTag(tag)
     },
@@ -551,7 +555,7 @@ export default {
         item,
         tagName: getPrefix('checkbox', this.lib),
         props,
-        children: item.text
+        children: item.text,
       }
       return this.generateTag(tag)
     },
@@ -568,12 +572,12 @@ export default {
             {
               props: {
                 border: item.border,
-                label: option.value
-              }
+                label: option.value,
+              },
             },
-            option.text
+            option.text,
           )
-        })
+        }),
       }
       return this.generateTag(tag)
     },
@@ -586,8 +590,8 @@ export default {
         props: {
           clearable: this.clearable,
           type: item.type,
-          ...(item.props || {})
-        }
+          ...(item.props || {}),
+        },
       }
       return this.generateTag(tag)
     },
@@ -604,8 +608,8 @@ export default {
         props: {
           clearable: this.clearable,
           type: item.type,
-          ...(item.props || {})
-        }
+          ...(item.props || {}),
+        },
       }
       return this.generateTag(tag)
     },
@@ -617,8 +621,8 @@ export default {
         props: {
           clearable: this.clearable,
           type: item.type,
-          ...(item.props || {})
-        }
+          ...(item.props || {}),
+        },
       }
       return this.generateTag(tag)
     },
@@ -633,7 +637,7 @@ export default {
         item,
         tagName: getPrefix('radio', this.lib),
         props,
-        children: item.text
+        children: item.text,
       }
       return this.generateTag(tag)
     },
@@ -650,12 +654,12 @@ export default {
             {
               props: {
                 border: item.border,
-                label: option.value
-              }
+                label: option.value,
+              },
             },
-            option.text
+            option.text,
           )
-        })
+        }),
       }
       return this.generateTag(tag)
     },
@@ -665,7 +669,7 @@ export default {
         h,
         item,
         tagName: getPrefix('switch', this.lib),
-        props: item.props || {}
+        props: item.props || {},
       }
       return this.generateTag(tag)
     },
@@ -675,7 +679,7 @@ export default {
         h,
         item,
         tagName: getPrefix('slider', this.lib),
-        props: item.props || {}
+        props: item.props || {},
       }
       return this.generateTag(tag)
     },
@@ -685,7 +689,7 @@ export default {
         h,
         item,
         tagName: getPrefix('input-number', this.lib),
-        props: item.props || {}
+        props: item.props || {},
       }
       return this.generateTag(tag)
     },
@@ -695,7 +699,7 @@ export default {
       const tag = {
         h,
         item,
-        tagName: getPrefix('cascader', this.lib)
+        tagName: getPrefix('cascader', this.lib),
       }
       if (this.lib === 'iview') {
         props.data = this.getCascaderOptions(item.options)
@@ -717,7 +721,7 @@ export default {
         value: this.form[item.key],
         min: 0,
         ...props,
-        disabled: this.disabled || item.disabled
+        disabled: this.disabled || item.disabled,
       }
       const attrs = item.attrs || {}
       let width = null
@@ -730,10 +734,10 @@ export default {
         'checkbox-group': true,
         radio: true,
         'radio-group': true,
-        'input-number': true
+        'input-number': true,
       }
       if (!ignoreMap[item.type]) {
-        const w = item.width || this['contentWidth']
+        const w = item.width || this.contentWidth
         if (typeof w === 'string' && (w.indexOf('%') >= 0 || w === 'auto')) {
           width = w
         } else {
@@ -749,7 +753,7 @@ export default {
           key: item.key,
           style: {
             width,
-            ...(item.style || {})
+            ...(item.style || {}),
           },
           on: {
             ...itemOn,
@@ -763,14 +767,14 @@ export default {
                   : value
               this.emitInput(value, item)
             },
-            ...on
+            ...on,
           },
           nativeOn: {
             ...itemNativeOn,
-            ...nativeOn
-          }
+            ...nativeOn,
+          },
         },
-        children
+        children,
       )
     },
     // 格式化日期返回，避免 null 的出现
@@ -840,7 +844,7 @@ export default {
     // 获取整个 form
     getForm() {
       return {
-        ...this.form
+        ...this.form,
       }
     },
     // 设值
@@ -849,7 +853,7 @@ export default {
         this.$set(this.form, key, form[key])
       }
       this.$emit('update:formValue', this.form)
-    }
+    },
   },
   render(h) {
     return h(
@@ -860,26 +864,26 @@ export default {
           rules: this.rules,
           'label-width':
             this.lib === 'iview'
-              ? +this['labelWidth']
-              : +this['labelWidth'] + 'px',
-          ...this.options
+              ? +this.labelWidth
+              : +this.labelWidth + 'px',
+          ...this.options,
         },
         ref: 'form',
         nativeOn: {
           submit(e) {
             e.preventDefault()
             e.stopPropagation()
-          }
-        }
+          },
+        },
       },
       [
         this.$slots.prepend,
         this.renderFormList(h, this.formList, true /* 根节点 */),
         !this.notCtrl && this.renderSubmit(h),
-        this.$slots.default
-      ]
+        this.$slots.default,
+      ],
     )
-  }
+  },
 }
 </script>
 

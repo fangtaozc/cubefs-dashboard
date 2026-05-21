@@ -82,8 +82,6 @@ export default {
   components: {
     UTablePage,
   },
-  inject: ['app'],
-  mixins: [mixin],
   filters: {
     readablizeBytes(value) {
       return readablizeBytes(value)
@@ -95,6 +93,8 @@ export default {
       return temp?.[0]
     },
   },
+  mixins: [mixin],
+  inject: ['app'],
   data() {
     return {
       data: [],

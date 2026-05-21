@@ -240,7 +240,7 @@ const typeList = {
   xml: 'application/xml',
   xsl: 'application/xml',
   xslt: 'application/xslt+xml',
-  xul: 'application/vnd.mozilla.xul+xml'
+  xul: 'application/vnd.mozilla.xul+xml',
 }
 export function getContentType(fileName) {
   const lastIndex = fileName.lastIndexOf('.')

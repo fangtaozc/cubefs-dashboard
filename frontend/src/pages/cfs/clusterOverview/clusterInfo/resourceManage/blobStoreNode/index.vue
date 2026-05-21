@@ -453,7 +453,7 @@ export default {
     async offLine(row) {
       try {
         const remark = await this.$prompt(
-          this.$t('resource.diskofflinetips1')+ `${
+          this.$t('resource.diskofflinetips1') + `${
           row.disabledCt ? (row.allNodeCt - row.disabledCt) : row.allNodeCt
           }` + this.$t('resource.diskofflinetips2') + `${row.allNodeCt} </span>。<br/>` + this.$t('resource.autooffline'),
           this.$t('common.notice'),

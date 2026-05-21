@@ -66,7 +66,7 @@ export default {
         AllowedMethods: [],
         AllowedHeaders: '',
         ExposeHeaders: '',
-        MaxAgeSeconds: 0
+        MaxAgeSeconds: 0,
       },
       isNew: true,
       dialogVisible: false,
@@ -76,14 +76,14 @@ export default {
         AllowedOrigins: [{
           required: true,
           message: this.$t('filemanage.entersource'),
-          trigger: 'blur'
+          trigger: 'blur',
         }],
         AllowedMethods: [{
           required: true,
           message: this.$t('filemanage.choosemethods'),
-          trigger: 'blur'
-        }]
-      }
+          trigger: 'blur',
+        }],
+      },
     }
   },
   methods: {
@@ -96,7 +96,7 @@ export default {
           AllowedHeaders: obj.AllowedHeaders
             ? obj.AllowedHeaders.join(',')
             : '',
-          ExposeHeaders: obj.ExposeHeaders ? obj.ExposeHeaders.join(',') : ''
+          ExposeHeaders: obj.ExposeHeaders ? obj.ExposeHeaders.join(',') : '',
         }
         this.editIndex = index
       }
@@ -139,7 +139,7 @@ export default {
         ExposeHeaders: this.form.ExposeHeaders.length
           ? this.form.ExposeHeaders.split(',')
           : null,
-        MaxAgeSeconds: Number(this.form.MaxAgeSeconds)
+        MaxAgeSeconds: Number(this.form.MaxAgeSeconds),
       }
       if (this.isNew) {
         this.allList.push(newObj)
@@ -151,7 +151,7 @@ export default {
         cluster_name: this.clusterName,
         vol: name,
         user: owner,
-        rules: data
+        rules: data,
       })
 
       this.$message.success(res.msg)
@@ -163,7 +163,7 @@ export default {
         AllowedMethods: [],
         AllowedHeaders: '',
         ExposeHeaders: '',
-        MaxAgeSeconds: 0
+        MaxAgeSeconds: 0,
       }
       this.allList = []
       this.$emit('get-data')
@@ -179,14 +179,14 @@ export default {
         }
         if (sing.length > 1) {
           this.$message.warning(
-            this.$t('filemanage.onewildcard')
+            this.$t('filemanage.onewildcard'),
           )
           return true
         }
         return false
       }
-    }
-  }
+    },
+  },
 }
 </script>
 

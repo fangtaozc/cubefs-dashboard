@@ -33,7 +33,7 @@ function env(mode = '', opts = { isOnly: false }) {
           `.env.${mode}.local.yaml`,
           `${mode}.yaml`,
           `${mode}.local.yaml`,
-        ]
+        ],
       )
     }
 

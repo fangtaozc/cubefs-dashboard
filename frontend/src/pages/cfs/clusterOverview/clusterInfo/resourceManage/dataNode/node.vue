@@ -117,7 +117,7 @@
       </el-table-column>
       <el-table-column :label="$t('common.updatetime')" prop="report_time" sortable width="130">
         <template slot-scope="scope">
-          <span>{{ scope.row.report_time | fFormatDate | formatDate}}</span>
+          <span>{{ scope.row.report_time | fFormatDate | formatDate }}</span>
         </template>
       </el-table-column>
       <el-table-column label="nodesetid" prop="node_set_id" sortable :width="110"></el-table-column>
@@ -150,22 +150,22 @@
         <span
           class="mg-lf-m"
         ><span>addr:</span><span class="mg-lf-m">{{ curNode.addr }}</span></span>
-          <span
-            class="mg-lf-m"
-          ><span>{{ $t('common.status') }}:</span><span class="mg-lf-m">{{ curNode.status }}</span></span>
-          <span
-            class="mg-lf-m"
-          ><span>{{ $t('common.writable') }}:</span><span class="mg-lf-m">{{ curNode.writable }}</span></span>
-          <span
-            class="mg-lf-m"
-          ><span>{{ $t('common.total') }}{{ $t('common.size') }}:</span><span class="mg-lf-m">{{ curNode.total }}</span></span>
-          <span
-            class="mg-lf-m"
-          ><span>{{ $t('common.used') }}:</span><span class="mg-lf-m">{{ curNode.used }}</span></span>
-          <span
-            class="mg-lf-m"
-          ><span>{{ $t('common.usage') }}:</span><span class="mg-lf-m">{{ curNode.usage_ratio }}</span></span>
-        </div>
+        <span
+          class="mg-lf-m"
+        ><span>{{ $t('common.status') }}:</span><span class="mg-lf-m">{{ curNode.status }}</span></span>
+        <span
+          class="mg-lf-m"
+        ><span>{{ $t('common.writable') }}:</span><span class="mg-lf-m">{{ curNode.writable }}</span></span>
+        <span
+          class="mg-lf-m"
+        ><span>{{ $t('common.total') }}{{ $t('common.size') }}:</span><span class="mg-lf-m">{{ curNode.total }}</span></span>
+        <span
+          class="mg-lf-m"
+        ><span>{{ $t('common.used') }}:</span><span class="mg-lf-m">{{ curNode.used }}</span></span>
+        <span
+          class="mg-lf-m"
+        ><span>{{ $t('common.usage') }}:</span><span class="mg-lf-m">{{ curNode.usage_ratio }}</span></span>
+      </div>
       <el-tabs v-model="activeName" class="inside">
         <el-tab-pane
           v-for="item in tabs"
@@ -210,7 +210,7 @@ export default {
       return formatDate(v)
     },
     formatDate(val) {
-      return val.replace(" ", "\n")
+      return val.replace(' ', '\n')
     },
   },
   mixins: [Mixin, NodeMixin],
@@ -324,7 +324,7 @@ export default {
     },
     async handleOffLine({ addr }) {
       try {
-        await this.$confirm( this.$t('resource.offlinenodeconfirm')+ `(${addr})?`, this.$t('common.notice'), {
+        await this.$confirm(this.$t('resource.offlinenodeconfirm') + `(${addr})?`, this.$t('common.notice'), {
           confirmButtonText: this.$t('common.yes'),
           cancelButtonText: this.$t('common.no'),
           type: 'warning',

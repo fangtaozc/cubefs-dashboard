@@ -23,7 +23,8 @@
       <el-alert
         :title="$t('common.tips')"
         type="info"
-        show-icon>
+        show-icon
+      >
         <div>
           <p>{{ $t('filemanage.tips1') }}</p>
           <p>{{ $t('filemanage.source') }}: {{ protocol }}//{{ host }}</p>
@@ -48,7 +49,7 @@ import File from './file'
 import Cors from './Cors/Index.vue'
 export default {
   components: {
-    ModuleBucketTitle, File, Cors
+    ModuleBucketTitle, File, Cors,
   },
   mixins: [mixin],
   data() {

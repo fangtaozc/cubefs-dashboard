@@ -74,18 +74,18 @@ import { cloneDeep } from 'lodash'
 
 export default {
   components: {
-    NewCom
+    NewCom,
   },
   mixins: [mixin],
   data() {
     return {
-      tableData: []
+      tableData: [],
     }
   },
   computed: {
     disableDelBtn() {
       return this.tableData.length
-    }
+    },
   },
   created() {
     this.getData()
@@ -96,7 +96,7 @@ export default {
       const res = await getCors({
         cluster_name: this.clusterName,
         vol: name,
-        user: owner
+        user: owner,
       })
       this.tableData = res.data.CORSRules || []
       this.$emit('get-cors', cloneDeep(this.tableData))
@@ -134,11 +134,11 @@ export default {
         cluster_name: this.clusterName,
         vol: name,
         user: owner,
-        rules: this.tableData
+        rules: this.tableData,
       })
       this.getData()
-    }
-  }
+    },
+  },
 }
 </script>
 

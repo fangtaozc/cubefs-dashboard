@@ -31,7 +31,7 @@ export const offLineNodeList = ({ region, clusterId, ...params }) => ajax.post(b
 // 列表
 export const changeRWNodeList = ({ region, clusterId, ...params }) => ajax.post(base({ region, clusterId }) + 'nodes/access', params)
 // 节点服务下线
-export const offlineService = ({ region, clusterId, ...params }) => ajax.post(base({ region, clusterId, }) + 'nodes/offline', params)
+export const offlineService = ({ region, clusterId, ...params }) => ajax.post(base({ region, clusterId }) + 'nodes/offline', params)
 export const nodeConfigReload = ({ region, clusterId, ...params }) => ajax.post(base({ region, clusterId }) + 'nodes/config/reload', params)
 
 // 列表

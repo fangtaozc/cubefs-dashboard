@@ -362,3 +362,62 @@ export const deleteSyncStorageBackend = (param) => {
 export const getSyncStorageBackendConfig = (param) => {
   return Ajax.get(prefix(param) + 'syncStorageBackend/config', param)
 }
+
+// -----------  Bench Rules  --------------
+export const getBenchRuleList = (param) => {
+  return Ajax.get(prefix(param) + 'benchRule/list', param)
+}
+
+export const createBenchRule = (param) => {
+  return Ajax.post(prefix(param) + 'benchRule/create', param)
+}
+
+export const updateBenchRule = (param) => {
+  return Ajax.post(prefix(param) + 'benchRule/update', param)
+}
+
+export const deleteBenchRule = (param) => {
+  return Ajax.post(prefix(param) + 'benchRule/delete', param)
+}
+
+export const triggerBenchRule = (param) => {
+  return Ajax.post(prefix(param) + 'benchRule/trigger', param)
+}
+
+// -----------  Bench Tasks  --------------
+export const getBenchTaskList = (param) => {
+  return Ajax.get(prefix(param) + 'benchTask/list', param)
+}
+
+export const cancelBenchTask = (param) => {
+  return Ajax.post(prefix(param) + 'benchTask/cancel', param)
+}
+
+export const retryBenchTask = (param) => {
+  return Ajax.post(prefix(param) + 'benchTask/retry', param)
+}
+
+export const deleteBenchTask = (param) => {
+  return Ajax.post(prefix(param) + 'benchTask/delete', param)
+}
+
+// -----------  POSIX Compliance (pjd-fstest)  --------------
+export const listPosixCheckRuns = (param) => {
+  return Ajax.get(prefix(param) + 'posixCheck/list', param)
+}
+
+export const getPosixCheckRun = (param) => {
+  return Ajax.get(prefix(param) + 'posixCheck/get', param)
+}
+
+export const runPosixCheck = (param) => {
+  return Ajax.post(prefix(param) + 'posixCheck/run', param)
+}
+
+export const cancelPosixCheck = (param) => {
+  return Ajax.post(prefix(param) + 'posixCheck/cancel', param)
+}
+
+export const deletePosixCheck = (param) => {
+  return Ajax.post(prefix(param) + 'posixCheck/delete', param)
+}

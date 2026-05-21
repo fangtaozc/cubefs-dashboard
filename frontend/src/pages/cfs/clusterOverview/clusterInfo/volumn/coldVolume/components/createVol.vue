@@ -67,7 +67,7 @@
       </el-form-item>
       <el-form-item label="owner:" prop="owner">
         <el-select v-model="forms.owner">
-          <el-option v-for="item in userList" :label="item.user_id" :value="item.user_id" :key="item.user_id"></el-option>
+          <el-option v-for="item in userList" :key="item.user_id" :label="item.user_id" :value="item.user_id"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('common.business')+ ':'" prop="work">
@@ -75,7 +75,7 @@
           v-model="forms.work"
           type="textarea"
           :rows="2"
-          :placeholder="this.$t('volume.inputbusiness')"
+          :placeholder="$t('volume.inputbusiness')"
           class="input"
         ></el-input>
       </el-form-item>
@@ -162,7 +162,7 @@ export default {
             message: this.$t('volume.selectowner'),
             trigger: 'blur',
           },
-        ]
+        ],
       }
     },
   },

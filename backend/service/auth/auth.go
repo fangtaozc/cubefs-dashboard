@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/cubefs/cubefs/blobstore/util/log"
 
@@ -238,6 +239,88 @@ func InitAuth() error {
 	err = initUser()
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func SyncDefaults(tx *gorm.DB) error {
+	if tx == nil {
+		return errors.New("db is nil")
+	}
+	if err := syncPermissionDefaults(tx); err != nil {
+		return err
+	}
+	if err := syncRolePermissionDefaults(tx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func syncPermissionDefaults(tx *gorm.DB) error {
+	for _, item := range DefaultPermission {
+		temp := make([]model.AuthPermission, 0)
+		query := tx.Model(&model.AuthPermission{}).Where("auth_code = ?", item.AuthCode).Find(&temp)
+		if query.Error != nil {
+			return query.Error
+		}
+		if len(temp) > 0 {
+			continue
+		}
+		permission := item
+		if query = tx.Create(&permission); query.Error != nil {
+			return query.Error
+		}
+	}
+	return nil
+}
+
+func syncRolePermissionDefaults(tx *gorm.DB) error {
+	for roleCode, codes := range DefaultRolePermission {
+		role := new(model.AuthRole)
+		query := tx.Model(&model.AuthRole{}).Where("role_code = ?", roleCode).First(&role)
+		if query.Error != nil {
+			return query.Error
+		}
+
+		perList := make([]int, 0)
+		query = tx.Model(&model.AuthPermission{}).Select("id")
+		if roleCode == "Admin" {
+			query = query.Where("1 = 1")
+		} else {
+			query = query.Where("auth_code in ?", codes)
+		}
+		if query = query.Find(&perList); query.Error != nil {
+			return query.Error
+		}
+		if len(perList) == 0 {
+			continue
+		}
+
+		exists := make([]int, 0)
+		if query = tx.Model(&model.AuthRolePermission{}).Select("permission_id").Where("role_id = ?", role.Id).Find(&exists); query.Error != nil {
+			return query.Error
+		}
+		existMap := make(map[int]struct{}, len(exists))
+		for _, permissionID := range exists {
+			existMap[permissionID] = struct{}{}
+		}
+
+		rolePermissions := make([]model.AuthRolePermission, 0)
+		for _, permissionID := range perList {
+			if _, ok := existMap[permissionID]; ok {
+				continue
+			}
+			rolePermissions = append(rolePermissions, model.AuthRolePermission{
+				RoleId:       role.Id,
+				PermissionId: permissionID,
+			})
+		}
+		if len(rolePermissions) == 0 {
+			continue
+		}
+		if query = tx.Model(&model.AuthRolePermission{}).Create(&rolePermissions); query.Error != nil {
+			return query.Error
+		}
 	}
 	return nil
 }

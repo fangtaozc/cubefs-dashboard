@@ -29,6 +29,6 @@ export default {
     },
     idcList() {
       return this.clusterInfo.clusterInfo.idc.split(',').map(item => ({ label: item, value: item }))
-    }
+    },
   },
 }

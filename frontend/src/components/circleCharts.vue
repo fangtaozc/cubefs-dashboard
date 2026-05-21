@@ -16,7 +16,7 @@
 
 <template>
   <div class="chart_warp">
-    <div class="text_title">{{ $t(title)}}</div>
+    <div class="text_title">{{ $t(title) }}</div>
     <div
       ref="echartsView"
       :class="[noData ? 'hiddCenter' : '', 'width_height100']"
@@ -71,7 +71,7 @@ export default {
     },
     '$i18n.locale'(newValue) {
       this.init()
-    }
+    },
   },
   async mounted() {
     this.getTotal()
@@ -115,7 +115,7 @@ export default {
             }
             const percent = (itemValue[0].value / this.total * 100).toFixed(2)
             // return i18nname + `：(${this.valueFormat(itemValue[0].value)}/${percent}%)`
-              return `${this.$t(name)}：(${this.valueFormat(itemValue[0].value)}/${percent}%)`
+            return `${this.$t(name)}：(${this.valueFormat(itemValue[0].value)}/${percent}%)`
           },
         },
         color: this.color,

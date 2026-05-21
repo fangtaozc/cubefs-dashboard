@@ -24,10 +24,10 @@ export default {
         class={[
           'o-icon',
           `ion-${context.props.type}`,
-          context.data.staticClass
+          context.data.staticClass,
         ]}
       ></i>
     )
-  }
+  },
 }
 </script>

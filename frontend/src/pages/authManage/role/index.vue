@@ -69,7 +69,7 @@ export default {
           width: 120,
         },
         {
-          title: this.$t('common.role') + " " + this.$t('common.name'),
+          title: this.$t('common.role') + ' ' + this.$t('common.name'),
           key: 'role_name',
           width: 200,
         },

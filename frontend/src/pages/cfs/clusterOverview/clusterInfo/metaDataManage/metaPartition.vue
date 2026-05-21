@@ -45,8 +45,8 @@
             ref="filterTableData"
             :data-list="originDataList"
             :types="['STATUS', 'RECOVER']"
-            @filterData="filterData"
             style="flex: 0 0 auto; margin-right: 20px;"
+            @filterData="filterData"
           ></FilterTableData>
           <div class="search">
             <el-radio-group v-model="radio" @change="onChangeRadio">

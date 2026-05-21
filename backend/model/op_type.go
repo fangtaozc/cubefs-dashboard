@@ -242,6 +242,20 @@ func getDefaultOpTypes() []OpType {
 		{Method: "POST", URI: prefix + "/cfs/:cluster/syncTask/retry", NameEN: "retry sync task", NameCN: "", Record: true},
 		{Method: "POST", URI: prefix + "/cfs/:cluster/syncTask/delete", NameEN: "delete sync task", NameCN: "", Record: true},
 
+		// cfs.benchRule
+		{Method: "GET", URI: prefix + "/cfs/:cluster/benchRule/list", NameEN: "list bench rules", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/benchRule/get", NameEN: "get bench rule", NameCN: ""},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchRule/create", NameEN: "create bench rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchRule/update", NameEN: "update bench rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchRule/delete", NameEN: "delete bench rule", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchRule/trigger", NameEN: "trigger bench rule", NameCN: "", Record: true},
+
+		// cfs.benchTask
+		{Method: "GET", URI: prefix + "/cfs/:cluster/benchTask/list", NameEN: "list bench tasks", NameCN: ""},
+		{Method: "GET", URI: prefix + "/cfs/:cluster/benchTask/get", NameEN: "get bench task", NameCN: ""},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchTask/cancel", NameEN: "cancel bench task", NameCN: "", Record: true},
+		{Method: "POST", URI: prefix + "/cfs/:cluster/benchTask/retry", NameEN: "retry bench task", NameCN: "", Record: true},
+
 		// auth
 		{Method: "POST", URI: prefix + "/auth/login", NameEN: "user login", NameCN: "登录"},
 		{Method: "POST", URI: prefix + "/auth/logout", NameEN: "user logout", NameCN: "登出"},

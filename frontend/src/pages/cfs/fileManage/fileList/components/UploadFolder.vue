@@ -36,6 +36,7 @@ import { dirsCreate } from '@/api/cfs/cluster'
 import { mapGetters } from 'vuex'
 import mixin from '@/pages/cfs/clusterOverview/mixin'
 export default {
+  mixins: [mixin],
   data() {
     return {
       dialogVisible: false,
@@ -43,7 +44,6 @@ export default {
       prefix: '',
     }
   },
-  mixins: [mixin],
   computed: {
     ...mapGetters({
       env: 'getNetEnv',

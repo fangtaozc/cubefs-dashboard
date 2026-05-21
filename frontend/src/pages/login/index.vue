@@ -17,10 +17,10 @@
 <template>
   <div class="container">
     <div class="language">
-          <el-select v-model="language" @change="changeLang">
-            <el-option value="zh" label="简体中文"></el-option>
-            <el-option value="en" label="English"></el-option>
-          </el-select>
+      <el-select v-model="language" @change="changeLang">
+        <el-option value="zh" label="简体中文"></el-option>
+        <el-option value="en" label="English"></el-option>
+      </el-select>
     </div>
     <Logo class="logo" />
     <div class="description">
@@ -291,7 +291,7 @@ export default {
     },
     changeLang() {
       const langType = this.language
-      localStorage.setItem("language", langType)
+      localStorage.setItem('language', langType)
       this.$i18n.locale = langType
     },
   },
@@ -425,4 +425,3 @@ export default {
   }
 }
 </style>
-

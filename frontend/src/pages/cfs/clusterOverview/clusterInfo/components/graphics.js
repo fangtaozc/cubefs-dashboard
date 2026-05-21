@@ -120,8 +120,8 @@ export default {
       }
       const dataInfo = calcData(dataTotal, dataUsed)
       const metaInfo = calcData(metaTotal, metaUsed)
-      this.mpDpchartData.push({ data: [{ name: this.$t('common.used'), value: dataInfo.used }, {name: this.$t('common.free'), value: dataInfo.noUsed}], title: this.$t('common.data') + this.$t('common.usage') })
-      this.mpDpchartData.push({ data: [{ name: this.$t('common.used'), value: metaInfo.used }, {name: this.$t('common.free'), value: metaInfo.noUsed}], title: this.$t('common.meta') + this.$t('common.usage') })
+      this.mpDpchartData.push({ data: [{ name: this.$t('common.used'), value: dataInfo.used }, { name: this.$t('common.free'), value: dataInfo.noUsed }], title: this.$t('common.data') + this.$t('common.usage') })
+      this.mpDpchartData.push({ data: [{ name: this.$t('common.used'), value: metaInfo.used }, { name: this.$t('common.free'), value: metaInfo.noUsed }], title: this.$t('common.meta') + this.$t('common.usage') })
     },
     showDialog(name) {
       const disk = this.$t('common.disk') + this.$t('common.status')

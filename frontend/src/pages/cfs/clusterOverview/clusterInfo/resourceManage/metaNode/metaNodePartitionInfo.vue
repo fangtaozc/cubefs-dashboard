@@ -135,7 +135,7 @@ export default {
     async handleOffLine({ partition_id }) {
       const nodeAddr = this.addr
       try {
-        await this.$confirm(this.$t('resource.offlineconfirm') + '(' +`${partition_id}` + ')' + this.$t('common.disk') + '?', this.$t('common.notice'), {
+        await this.$confirm(this.$t('resource.offlineconfirm') + '(' + `${partition_id}` + ')' + this.$t('common.disk') + '?', this.$t('common.notice'), {
           confirmButtonText: this.$t('common.yes'),
           cancelButtonText: this.$t('common.no'),
           type: 'warning',

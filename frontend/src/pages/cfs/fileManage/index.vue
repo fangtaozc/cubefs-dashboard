@@ -120,7 +120,7 @@ export default {
   computed: {
     s3Endpoint() {
       return this.clusterInfo.clusterInfo.s3_endpoint
-    }
+    },
   },
   watch: {
     searchData() {
@@ -134,14 +134,14 @@ export default {
     async getCors({ vol, user }) {
       const params = {
         vol,
-        user
+        user,
       }
       const res = await getCors(params)
     },
     gotoFileList(row) {
       if (!this.s3Endpoint) {
         this.$message.warning(this.$t('filemanage.nos3'))
-        return;
+        return
       }
       this.$router.push({
         name: 'fileList',
@@ -151,7 +151,7 @@ export default {
           zone_name: row.zone_name,
           name: row.name,
           owner: row.owner,
-        }
+        },
       })
     },
     search() {

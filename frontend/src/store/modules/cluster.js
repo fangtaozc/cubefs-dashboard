@@ -23,7 +23,7 @@ const moduleCluster = {
     cli: '',
     ebsClusterInfo: [],
     clusterInfo: {},
-    domainName: ''
+    domainName: '',
   }),
   mutations: {
     setClusterInfo(state, payload) {
@@ -48,7 +48,7 @@ const moduleCluster = {
       const { clusterName, leaderAddr, masterAddr, cli, domainName, clusterInfo, ebsClusterInfo } = state
       if (clusterName && leaderAddr) {
         return {
-          clusterName, leaderAddr, masterAddr, cli, domainName, clusterInfo, ebsClusterInfo
+          clusterName, leaderAddr, masterAddr, cli, domainName, clusterInfo, ebsClusterInfo,
         }
       } else {
         return JSON.parse(sessionStorage.getItem('clusterInfo'))
@@ -57,7 +57,7 @@ const moduleCluster = {
     ebsClusterInfog(state) {
       const { ebsClusterInfo, clusterName } = state
       if (clusterName) {
-        return ebsClusterInfo;
+        return ebsClusterInfo
       } else {
         return JSON.parse(sessionStorage.getItem('clusterInfo')).ebsClusterInfo
       }

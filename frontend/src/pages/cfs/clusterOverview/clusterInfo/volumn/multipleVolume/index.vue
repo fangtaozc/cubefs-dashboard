@@ -164,13 +164,13 @@
               type="text"
               @click="handleExpansion(scope.row, 'shrink')"
             >{{ $t('common.scaledown') }}</el-button>
-<!--            <el-button-->
-<!--              v-auth="'CFS_VOLS_DELETE'"-->
-<!--              class="btn"-->
-<!--              size="medium"-->
-<!--              type="text"-->
-<!--              @click="deleteVol(scope.row)"-->
-<!--            >{{ $t('common.delete') }}</el-button>-->
+            <!--            <el-button-->
+            <!--              v-auth="'CFS_VOLS_DELETE'"-->
+            <!--              class="btn"-->
+            <!--              size="medium"-->
+            <!--              type="text"-->
+            <!--              @click="deleteVol(scope.row)"-->
+            <!--            >{{ $t('common.delete') }}</el-button>-->
             <el-button
               v-auth="'CFS_USERS_POLICIES'"
               class="btn"
@@ -260,12 +260,12 @@ import CreateDp from './components/createDp'
 import CreateMp from './components/createMp'
 import UpdateVol from './components/updateVol.vue'
 import FilterTableData from '@/pages/components/filter'
-import {getVolList, getVolDetail, deleteVol} from '@/api/cfs/cluster'
+import { getVolList, getVolDetail, deleteVol } from '@/api/cfs/cluster'
 import { sortSizeWithUnit, renderSize, generateEXCEL } from '@/utils'
 import Mixin from '@/pages/cfs/clusterOverview/mixin'
 import Partition from '../partition.vue'
 import MetaPartition from '../metaPartition.vue'
-import {setNodeInfoBad} from "@/api/ebs/ebs";
+import { setNodeInfoBad } from '@/api/ebs/ebs'
 export default {
   components: {
     MoreOPerate,
@@ -296,8 +296,8 @@ export default {
       return [replica, ec][val]
     },
     formatDate(val) {
-      return val.replace(" ", "\n")
-    }
+      return val.replace(' ', '\n')
+    },
   },
   mixins: [Mixin],
   data() {
@@ -478,7 +478,7 @@ export default {
             showClose: true,
             message: this.$t('common.delete') + this.$t('common.failed') + '\n' + res.data,
             type: 'error',
-            duration: 10000
+            duration: 10000,
           })
         }
       } catch (e) {}

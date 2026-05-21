@@ -102,7 +102,7 @@ export default {
         start: +start,
         cluster_name: this.clusterName,
       })
-      this.$message.success( this.$t('volume.mpsuc'))
+      this.$message.success(this.$t('volume.mpsuc'))
       this.$emit('refresh')
       this.close()
     },

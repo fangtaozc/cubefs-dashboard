@@ -14,7 +14,6 @@
  * permissions and limitations under the License.
  */
 
-
 const RouterViewHoc = {
   name: 'RouterViewHoc',
   render(h) {
@@ -138,6 +137,30 @@ export const clusterDetailChildren = [
       title: 'router.events',
     },
     component: () => import('@/pages/cfs/clusterOverview/clusterInfo/events/index.vue'),
+  },
+  {
+    path: 'syncManage',
+    name: 'syncManage',
+    meta: {
+      title: 'router.syncmanage',
+    },
+    component: () => import('@/pages/cfs/clusterOverview/clusterInfo/syncManage/index.vue'),
+  },
+  {
+    path: 'testManage',
+    name: 'testManage',
+    meta: {
+      title: 'router.testmanage',
+    },
+    component: () => import('@/pages/cfs/clusterOverview/clusterInfo/testManage/index.vue'),
+  },
+  {
+    path: 'posixCompliance',
+    name: 'posixCompliance',
+    meta: {
+      title: 'router.posixcompliance',
+    },
+    component: () => import('@/pages/cfs/clusterOverview/clusterInfo/posixCompliance/index.vue'),
   },
 ]
 

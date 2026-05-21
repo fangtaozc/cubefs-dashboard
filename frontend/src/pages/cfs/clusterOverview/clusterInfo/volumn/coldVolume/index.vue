@@ -143,18 +143,17 @@
         :width="100"
         sortable
       >
-      <template slot-scope="scope">
+        <template slot-scope="scope">
           {{ scope.row.create_time | formatDate }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('common.business')" prop="business"></el-table-column>
-      <el-table-column :label="$t('common.action')" :width="80"  align="center" fixed="right">
+      <el-table-column :label="$t('common.action')" :width="80" align="center" fixed="right">
         <template slot-scope="scope">
           <MoreOPerate
             :count="1"
             title="common.action"
             :i18n="i18n"
-
           >
             <el-button
               v-auth="'CFS_VOLS_EXPAND'"
@@ -170,16 +169,16 @@
               type="text"
               @click="handleExpansion(scope.row, 'shrink')"
             >{{ $t('common.scaledown') }}</el-button>
-<!--            <el-button-->
-<!--              v-auth="'CFS_VOLS_DELETE'"-->
-<!--              size="medium"-->
-<!--              type="text"-->
-<!--              class="btn"-->
-<!--              @click="deleteVol(scope.row)"-->
-<!--            >-->
-<!--              &lt;!&ndash; 删除纠删码卷 &ndash;&gt;-->
-<!--              {{ $t('common.delete') }}-->
-<!--            </el-button>-->
+            <!--            <el-button-->
+            <!--              v-auth="'CFS_VOLS_DELETE'"-->
+            <!--              size="medium"-->
+            <!--              type="text"-->
+            <!--              class="btn"-->
+            <!--              @click="deleteVol(scope.row)"-->
+            <!--            >-->
+            <!--              &lt;!&ndash; 删除纠删码卷 &ndash;&gt;-->
+            <!--              {{ $t('common.delete') }}-->
+            <!--            </el-button>-->
             <el-button
               v-auth="'CFS_USERS_POLICIES'"
               class="btn"
@@ -291,7 +290,7 @@ import CreateDp from './components/createDp'
 import CreateMp from './components/createMp'
 import UpdateVol from './components/updateVol.vue'
 import FilterTableData from '@/pages/components/filter'
-import {getVolList, getVolDetail, deleteVol} from '@/api/cfs/cluster'
+import { getVolList, getVolDetail, deleteVol } from '@/api/cfs/cluster'
 import { sortSizeWithUnit, renderSize, generateEXCEL, codeMap } from '@/utils'
 import Mixin from '@/pages/cfs/clusterOverview/mixin'
 import Partition from '../partition.vue'
@@ -326,7 +325,7 @@ export default {
       return [replica, ec][val]
     },
     formatDate(val) {
-      return val.replace(" ", "\n")
+      return val.replace(' ', '\n')
     },
   },
   mixins: [Mixin],
@@ -508,7 +507,7 @@ export default {
             showClose: true,
             message: this.$t('common.delete') + this.$t('common.failed') + '\n' + res.data,
             type: 'error',
-            duration: 10000
+            duration: 10000,
           })
         }
       } catch (e) {}

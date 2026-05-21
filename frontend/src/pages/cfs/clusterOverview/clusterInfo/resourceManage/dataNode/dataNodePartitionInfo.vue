@@ -197,7 +197,7 @@ export default {
     },
     async handleOffLine({ id }) {
       try {
-        await this.$confirm( this.$t('resource.offlineconfirm') + `(${id})?`, this.$t('common.notice'), {
+        await this.$confirm(this.$t('resource.offlineconfirm') + `(${id})?`, this.$t('common.notice'), {
           confirmButtonText: this.$t('common.yes'),
           cancelButtonText: this.$t('common.no'),
           type: 'warning',

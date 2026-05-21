@@ -74,7 +74,7 @@ export default {
             type: 'number',
             trigger: 'blur',
             message: this.$t('volume.up50'),
-          }
+          },
         ],
         name: [
           {

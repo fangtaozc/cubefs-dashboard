@@ -1,10 +1,10 @@
 module.exports = {
   root: true,
   env: {
-    node: true
+    node: true,
   },
   globals: {
-    CONFIG: true
+    CONFIG: true,
   },
   extends: ['plugin:vue/recommended', '@vue/standard'],
   rules: {
@@ -30,11 +30,11 @@ module.exports = {
         singleline: 5,
         multiline: {
           max: 1,
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   parserOptions: {
-    parser: 'babel-eslint'
-  }
+    parser: 'babel-eslint',
+  },
 }

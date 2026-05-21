@@ -14,7 +14,6 @@
  permissions and limitations under the License.
 -->
 
-
 <template>
   <div class="o-dropdown">
     <el-popover
@@ -43,36 +42,36 @@ export default {
   props: {
     type: {
       type: String,
-      default: 'text'
+      default: 'text',
     },
     poperClass: {
       type: String,
-      default: ''
+      default: '',
     },
     width: {
       type: [Number, String],
-      default: 'auto'
+      default: 'auto',
     },
     trigger: {
       type: String,
-      default: 'click'
+      default: 'click',
     },
     visibleArrow: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   data: function() {
     return {
       internalWidth: this.type !== 'text' ? 110 : this.width,
-      visible: false
+      visible: false,
     }
   },
   methods: {
     hideContent(e) {
       this.visible = false
-    }
-  }
+    },
+  },
 }
 </script>
 <style lang="scss">

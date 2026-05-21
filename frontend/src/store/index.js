@@ -31,7 +31,7 @@ export default new Vuex.Store({
     moduleUser,
   },
   state: {
-    routes: []
+    routes: [],
   },
   getters,
   actions,

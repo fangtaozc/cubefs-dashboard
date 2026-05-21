@@ -63,7 +63,7 @@
   </el-dialog>
 </template>
 <script>
-import {getUserNameList, transferVol} from '@/api/cfs/cluster'
+import { getUserNameList, transferVol } from '@/api/cfs/cluster'
 import Mixin from '@/pages/cfs/clusterOverview/mixin'
 export default {
   mixins: [Mixin],
@@ -138,7 +138,7 @@ export default {
           showClose: true,
           message: this.$t('privileges.CFS_USERS_VOLS_TRANSFER') + this.$t('common.permissions') + this.$t('common.failed') + '\n' + res.data,
           type: 'error',
-          duration: 10000
+          duration: 10000,
         })
       }
       this.$emit('refresh')

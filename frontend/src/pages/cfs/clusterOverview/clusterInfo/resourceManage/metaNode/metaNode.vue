@@ -138,7 +138,7 @@ export default {
       return formatDate(v)
     },
     formatDate(val) {
-      return val.replace(" ", "\n")
+      return val.replace(' ', '\n')
     },
   },
   mixins: [Mixin],

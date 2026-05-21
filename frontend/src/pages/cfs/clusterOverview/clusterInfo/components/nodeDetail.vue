@@ -426,7 +426,7 @@ export default {
     async changeRW({ disk_id, readonly }) {
       try {
         await this.$confirm(
-          this.$t('resource.setdiskstatus')+ `${readonly ?  this.$t('common.rw'): this.$t('common.ro')}?`,
+          this.$t('resource.setdiskstatus') + `${readonly ? this.$t('common.rw') : this.$t('common.ro')}?`,
           this.$t('common.notice'),
           {
             confirmButtonText: this.$t('common.yes'),

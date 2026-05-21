@@ -25,7 +25,14 @@
             type="primary"
             @click="showDialog('add')"
           >{{ $t('common.add') }}{{ $t('common.cluster') }}</el-button>
-          <o-page-table :columns="tableColumns" :form-data="formData" :data="tableData" :total="tabletotal" :current-page="tablepage" :page-size="tableperpage"></o-page-table>
+          <o-page-table
+            :columns="tableColumns"
+            :form-data="formData"
+            :data="tableData"
+            :total="tabletotal"
+            :current-page="tablepage"
+            :page-size="tableperpage"
+          ></o-page-table>
         </el-tab-pane>
       </el-tabs>
       <el-dialog
@@ -55,7 +62,7 @@
   </div>
 </template>
 <script>
-import {getClusterList, upDateCluster, createCluster, deleteVol, deleteCluster} from '@/api/cfs/cluster'
+import { getClusterList, upDateCluster, createCluster, deleteCluster } from '@/api/cfs/cluster'
 import { getClusterList as getEbsClusterList } from '@/api/ebs/ebs'
 import { initCfsClusterRoute } from '@/router/index'
 import { mapMutations } from 'vuex'
@@ -69,6 +76,8 @@ export default {
       formData: {},
       formValue: {
         consul_addr: '',
+        sync_node_http_port: 17911,
+        sync_admin_token: '',
       },
       tableData: [],
       dialogFormVisible: false,
@@ -170,7 +179,7 @@ export default {
           trigger: 'blur',
           validator: (rule, value, cb) => {
             const regIp =
-              /^https?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\:([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
+              /^https?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
             if (!value) {
               cb(new Error(this.$t('cfsclusteroverview.inputbsaddr')))
             } else {
@@ -222,7 +231,7 @@ export default {
               trigger: 'blur',
               validator: (rule, value, cb) => {
                 const regIp =
-                  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\:([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
+                  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
                 if (!value) {
                   cb(new Error(this.$t('cfsclusteroverview.inputmasteraddr')))
                 } else {
@@ -323,8 +332,8 @@ export default {
               trigger: 'blur',
               validator: (rule, value, cb) => {
                 const regIp =
-                  /^https?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\:([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
-                  const regDomain = /^(?=^.{3,255}$)http(s)?:\/\/?(www\.)?[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+(:\d+)*(\/\w+\.\w+)*$/
+                  /^https?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$/
+                const regDomain = /^(?=^.{3,255}$)http(s)?:\/\/?(www\.)?[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+(:\d+)*(\/\w+\.\w+)*$/
                 if (!value) {
                   cb()
                 } else {
@@ -332,7 +341,7 @@ export default {
                     return !!item
                   })
                   for (const ip of ipArr) {
-                    if (!regIp.test(ip) && !regDomain.test(ip) ) {
+                    if (!regIp.test(ip) && !regDomain.test(ip)) {
                       cb(new Error(this.$t('cfsclusteroverview.illegaladdr')))
                       break
                     }
@@ -341,6 +350,37 @@ export default {
                 }
                 cb()
               },
+            },
+          },
+          {
+            title: this.$t('cfsclusteroverview.syncnodeport'),
+            key: 'sync_node_http_port',
+            renderContent: (h, item, formData) => {
+              return (
+                <el-input-number
+                  v-model={formData.sync_node_http_port}
+                  min={1}
+                  max={65535}
+                  controls-position="right"
+                ></el-input-number>
+              )
+            },
+            rule: {
+              required: true,
+              message: this.$t('cfsclusteroverview.inputsyncnodeport'),
+              trigger: 'change',
+            },
+            defaultValue: 17911,
+          },
+          {
+            title: this.$t('cfsclusteroverview.syncadmintoken'),
+            key: 'sync_admin_token',
+            type: 'input',
+            props: {
+              type: 'password',
+              autocomplete: 'new-password',
+              showPassword: true,
+              placeholder: this.dataId ? this.$t('cfsclusteroverview.keepsyncadmintoken') : this.$t('cfsclusteroverview.inputsyncadmintoken'),
             },
           },
         ],
@@ -375,6 +415,7 @@ export default {
           vol_type: volType,
           consul_addr: consulAddr,
           s3_endpoint: s3Endpoint,
+          sync_node_http_port: syncNodeHTTPPort,
         } = type
         this.initForm(
           {
@@ -386,6 +427,8 @@ export default {
             domain,
             vol_type: volType,
             s3_endpoint: s3Endpoint,
+            sync_node_http_port: syncNodeHTTPPort || 17911,
+            sync_admin_token: '',
           },
           id,
         )
@@ -398,7 +441,7 @@ export default {
           cancelButtonText: this.$t('common.no'),
         }).then(async () => {
           const res = await deleteCluster({
-            name: row.name
+            name: row.name,
           })
           if (res.code === 200) {
             this.$message.success(this.$t('common.delete') + this.$t('common.xxsuc') + '<br/>' + res.data)
@@ -408,7 +451,7 @@ export default {
               showClose: true,
               message: this.$t('common.delete') + this.$t('common.failed') + '\n' + res.data,
               type: 'error',
-              duration: 10000
+              duration: 10000,
             })
           }
         })
@@ -422,7 +465,8 @@ export default {
         idc, cli, domain,
         vol_type: volType,
         s3_endpoint: s3Endpoint,
-        consul_addr: consulAddr
+        consul_addr: consulAddr,
+        sync_node_http_port: syncNodeHTTPPort,
       } = this.formValue
       const params = {
         s3_endpoint: s3Endpoint,
@@ -435,6 +479,10 @@ export default {
         cli,
         domain,
         vol_type: volType,
+        sync_node_http_port: syncNodeHTTPPort,
+      }
+      if (this.formValue.sync_admin_token) {
+        params.sync_admin_token = this.formValue.sync_admin_token
       }
       let publishCluster = createCluster
       if (this.dataId) {
@@ -442,7 +490,7 @@ export default {
         publishCluster = upDateCluster
       }
       await publishCluster(params)
-      this.$message.success(`${this.dataId ? this.$t('common.edit') : this.$t('common.add')}this.$t('common.xxsuc')`)
+      this.$message.success(`${this.dataId ? this.$t('common.edit') : this.$t('common.add')}${this.$t('common.xxsuc')}`)
       this.getClusterList()
       this.close()
     },
@@ -456,6 +504,8 @@ export default {
     clearData() {
       this.dataId = null
       this.$refs.form.reset()
+      this.formValue.sync_node_http_port = 17911
+      this.formValue.sync_admin_token = ''
     },
     close() {
       this.clearData()

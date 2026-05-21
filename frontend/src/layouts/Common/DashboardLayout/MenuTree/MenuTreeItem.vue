@@ -46,7 +46,7 @@
         class="button"
         @click="toggle(i)"
       >
-        {{ $t(menu.title) }} 
+        {{ $t(menu.title) }}
         <i class="expand-icon el-icon-arrow-right"></i>
       </span>
       <el-collapse-transition>

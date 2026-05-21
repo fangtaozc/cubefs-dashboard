@@ -18,6 +18,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/cubefs/cubefs-dashboard/backend/config"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/benchrule"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/benchtask"
+	"github.com/cubefs/cubefs-dashboard/backend/handler/posixcheck"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/datanode"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/datapartition"
 	"github.com/cubefs/cubefs-dashboard/backend/handler/disk"
@@ -164,5 +167,33 @@ func (c *cfsRouter) Register(engine *gin.Engine) {
 		syncBackends.POST("/update", syncstoragebackend.Update)
 		syncBackends.POST("/delete", syncstoragebackend.Delete)
 		syncBackends.GET("/config", syncstoragebackend.GetConfig)
+	}
+
+	benchRules := group.Group("/benchRule")
+	{
+		benchRules.GET("/list", benchrule.List)
+		benchRules.GET("/get", benchrule.Get)
+		benchRules.POST("/create", benchrule.Create)
+		benchRules.POST("/update", benchrule.Update)
+		benchRules.POST("/delete", benchrule.Delete)
+		benchRules.POST("/trigger", benchrule.Trigger)
+	}
+
+	benchTasks := group.Group("/benchTask")
+	{
+		benchTasks.GET("/list", benchtask.List)
+		benchTasks.GET("/get", benchtask.Get)
+		benchTasks.POST("/cancel", benchtask.Cancel)
+		benchTasks.POST("/retry", benchtask.Retry)
+		benchTasks.POST("/delete", benchtask.Delete)
+	}
+
+	posixChecks := group.Group("/posixCheck")
+	{
+		posixChecks.GET("/list", posixcheck.List)
+		posixChecks.GET("/get", posixcheck.Get)
+		posixChecks.POST("/run", posixcheck.Run)
+		posixChecks.POST("/cancel", posixcheck.Cancel)
+		posixChecks.POST("/delete", posixcheck.Delete)
 	}
 }

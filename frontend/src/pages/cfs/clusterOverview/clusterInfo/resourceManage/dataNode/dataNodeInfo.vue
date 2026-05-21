@@ -164,7 +164,7 @@ export default {
     },
     async handleOffLine({ path }) {
       try {
-        await this.$confirm( this.$t('resource.offlinenodedisk') + `(${this.addr} : ${path})`, this.$t('common.notice'), {
+        await this.$confirm(this.$t('resource.offlinenodedisk') + `(${this.addr} : ${path})`, this.$t('common.notice'), {
           confirmButtonText: this.$t('common.yes'),
           cancelButtonText: this.$t('common.no'),
           type: 'warning',

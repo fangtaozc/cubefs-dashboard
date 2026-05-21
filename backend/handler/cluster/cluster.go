@@ -35,18 +35,31 @@ import (
 	"github.com/cubefs/cubefs-dashboard/backend/helper/types"
 	"github.com/cubefs/cubefs-dashboard/backend/model"
 	"github.com/cubefs/cubefs-dashboard/backend/service/cluster"
+	syncservice "github.com/cubefs/cubefs-dashboard/backend/service/sync"
 )
 
 type CreateInput struct {
-	Name       string         `json:"name" binding:"required"`
-	MasterAddr types.StrSlice `json:"master_addr" binding:"required"`
-	IDC        string         `json:"idc"`
-	Cli        string         `json:"cli"`
-	Domain     string         `json:"domain"`
-	ConsulAddr string         `json:"consul_addr" binding:"omitempty,url"`
-	Tag        string         `json:"tag"`
-	S3Endpoint string         `json:"s3_endpoint" binding:"omitempty,url"`
-	VolType    enums.VolType  `json:"vol_type"`
+	Name             string           `json:"name" binding:"required"`
+	MasterAddr       types.StrSlice   `json:"master_addr" binding:"required"`
+	IDC              string           `json:"idc"`
+	Cli              string           `json:"cli"`
+	Domain           string           `json:"domain"`
+	ConsulAddr       string           `json:"consul_addr" binding:"omitempty,url"`
+	Tag              string           `json:"tag"`
+	S3Endpoint       string           `json:"s3_endpoint" binding:"omitempty,url"`
+	SyncNodeHTTPPort int              `json:"sync_node_http_port"`
+	SyncAdminToken   types.EncryptStr `json:"sync_admin_token"`
+	VolType          enums.VolType    `json:"vol_type"`
+}
+
+func (input *CreateInput) Check() error {
+	if input.SyncNodeHTTPPort <= 0 {
+		input.SyncNodeHTTPPort = syncservice.DefaultNodeHTTPPort
+	}
+	if input.SyncNodeHTTPPort > 65535 {
+		return errors.New("sync node http port is invalid")
+	}
+	return nil
 }
 
 func (input *CreateInput) checkAddr(c *gin.Context) error {
@@ -123,14 +136,26 @@ func Create(c *gin.Context) {
 }
 
 type UpdateInput struct {
-	Id         int64          `json:"id" binding:"required"`
-	MasterAddr types.StrSlice `json:"master_addr"`
-	IDC        string         `json:"idc"`
-	Cli        string         `json:"cli"`
-	Domain     string         `json:"domain"`
-	ConsulAddr string         `json:"consul_addr" binding:"omitempty,url"`
-	Tag        string         `json:"tag"`
-	S3Endpoint string         `json:"s3_endpoint" binding:"omitempty,url"`
+	Id               int64             `json:"id" binding:"required"`
+	MasterAddr       types.StrSlice    `json:"master_addr"`
+	IDC              string            `json:"idc"`
+	Cli              string            `json:"cli"`
+	Domain           string            `json:"domain"`
+	ConsulAddr       string            `json:"consul_addr" binding:"omitempty,url"`
+	Tag              string            `json:"tag"`
+	S3Endpoint       string            `json:"s3_endpoint" binding:"omitempty,url"`
+	SyncNodeHTTPPort *int              `json:"sync_node_http_port"`
+	SyncAdminToken   *types.EncryptStr `json:"sync_admin_token"`
+}
+
+func (input *UpdateInput) Check() error {
+	if input.SyncNodeHTTPPort == nil {
+		return nil
+	}
+	if *input.SyncNodeHTTPPort <= 0 || *input.SyncNodeHTTPPort > 65535 {
+		return errors.New("sync node http port is invalid")
+	}
+	return nil
 }
 
 func Update(c *gin.Context) {
@@ -188,6 +213,12 @@ func Update(c *gin.Context) {
 	handleStrBson(set, "domain", input.Domain)
 	handleStrBson(set, "tag", input.Tag)
 	handleStrBson(set, "s3_endpoint", input.S3Endpoint)
+	if input.SyncNodeHTTPPort != nil {
+		set["sync_node_http_port"] = *input.SyncNodeHTTPPort
+	}
+	if input.SyncAdminToken != nil && string(*input.SyncAdminToken) != "" {
+		set["sync_admin_token"] = *input.SyncAdminToken
+	}
 
 	if err := new(model.Cluster).Update(input.Id, set); err != nil {
 		log.Errorf("update cluster failed. err:%+v", err)

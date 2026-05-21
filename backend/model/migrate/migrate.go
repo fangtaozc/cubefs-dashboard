@@ -183,6 +183,66 @@ func Init() error {
 		Rollback: func(db *gorm.DB) error {
 			return nil
 		},
+	}, &gormigrate.Migration{
+		ID: "202605190_init_bench_defaults",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605200_create_posix_check_tables",
+		Migrate: func(tx *gorm.DB) error {
+			return model.MigratePosixCheck(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605200_init_posix_check_defaults",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605210_grant_operator_viewer_perms",
+		Migrate: func(tx *gorm.DB) error {
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605220_add_posix_check_delete",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
+	}, &gormigrate.Migration{
+		ID: "202605230_add_bench_task_delete",
+		Migrate: func(tx *gorm.DB) error {
+			if err := model.SyncDefaultOpTypes(tx); err != nil {
+				return err
+			}
+			return auth.SyncDefaults(tx)
+		},
+		Rollback: func(db *gorm.DB) error {
+			return nil
+		},
 	})
 	m := gormigrate.New(mysql.GetDB(), gormigrate.DefaultOptions, migrations)
 	return m.Migrate()

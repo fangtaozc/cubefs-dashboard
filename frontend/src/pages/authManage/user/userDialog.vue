@@ -37,7 +37,7 @@
           multiple
           filterable
           :disabled="type === 'delete'"
-          :placeholder = "$t('common.select')"
+          :placeholder="$t('common.select')"
         >
           <el-option
             v-for="item in roleList"

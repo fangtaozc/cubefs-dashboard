@@ -53,7 +53,7 @@ export default {
     },
   },
   render(h, context) {
-    const { count, title, type, poperClass, width, visibleArrow,i18n } = context.props
+    const { count, title, type, poperClass, width, visibleArrow, i18n } = context.props
     context.children = context.children.filter(item => {
       return item.tag
     })

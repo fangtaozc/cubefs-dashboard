@@ -45,12 +45,14 @@
               <el-table-column
                 prop="id"
                 label="ID"
-                width="180">
+                width="180"
+              >
               </el-table-column>
               <el-table-column
                 prop="addr"
                 label="addr"
-                width="180">
+                width="180"
+              >
               </el-table-column>
             </el-table>
           </div>

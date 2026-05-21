@@ -60,8 +60,8 @@
       </el-form-item>
       <el-form-item :label="$t('common.copies') + ':'" prop="replica_number">
         <el-radio-group v-model="forms.replica_number">
-          <el-radio :label="3">{{$t('common.triplicate')}}</el-radio>
-          <el-radio :label="2">{{$t('common.duplicate')}}</el-radio>
+          <el-radio :label="3">{{ $t('common.triplicate') }}</el-radio>
+          <el-radio :label="2">{{ $t('common.duplicate') }}</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="owner:" prop="owner">
@@ -74,7 +74,7 @@
           v-model="forms.work"
           type="textarea"
           :rows="2"
-          :placeholder="this.$t('volume.inputbusiness')"
+          :placeholder="$t('volume.inputbusiness')"
           class="input"
         ></el-input>
       </el-form-item>
@@ -161,7 +161,7 @@ export default {
             message: this.$t('volume.selectowner'),
             trigger: 'blur',
           },
-        ]
+        ],
       }
     },
   },

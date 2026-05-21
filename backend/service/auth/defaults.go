@@ -47,6 +47,9 @@ var (
 			"CFS_SYNCRULE_LIST", "CFS_SYNCRULE_GET", "CFS_SYNCRULE_CREATE", "CFS_SYNCRULE_UPDATE", "CFS_SYNCRULE_DELETE", "CFS_SYNCRULE_PAUSE", "CFS_SYNCRULE_RESUME", "CFS_SYNCRULE_TRIGGER",
 			"CFS_SYNCTASK_LIST", "CFS_SYNCTASK_GET", "CFS_SYNCTASK_EXPORT", "CFS_SYNCTASK_CANCEL", "CFS_SYNCTASK_RETRY", "CFS_SYNCTASK_DELETE", "CFS_SYNCNODE_DISPATCH",
 			"CFS_SYNCBACKEND_LIST", "CFS_SYNCBACKEND_CREATE", "CFS_SYNCBACKEND_UPDATE", "CFS_SYNCBACKEND_DELETE", "CFS_SYNCBACKEND_CONFIG",
+			"CFS_BENCHRULE_LIST", "CFS_BENCHRULE_GET", "CFS_BENCHRULE_CREATE", "CFS_BENCHRULE_UPDATE", "CFS_BENCHRULE_DELETE", "CFS_BENCHRULE_TRIGGER",
+			"CFS_BENCHTASK_LIST", "CFS_BENCHTASK_GET", "CFS_BENCHTASK_CANCEL", "CFS_BENCHTASK_RETRY", "CFS_BENCHTASK_DELETE",
+			"CFS_POSIXCHECK_LIST", "CFS_POSIXCHECK_GET", "CFS_POSIXCHECK_RUN", "CFS_POSIXCHECK_CANCEL", "CFS_POSIXCHECK_DELETE",
 			"CFS_S3_FILES_LIST", "CFS_S3_FILES_DOWNLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_COMPLETE", "CFS_S3_DIRS_CREATE",
 			"OPTYPES_CREATE", "OPTYPES_UPDATE", "OPTYPES_LIST", "OPLOGS_LIST",
 		},
@@ -70,6 +73,9 @@ var (
 			"CFS_SYNCRULE_LIST", "CFS_SYNCRULE_GET",
 			"CFS_SYNCTASK_LIST", "CFS_SYNCTASK_GET", "CFS_SYNCTASK_EXPORT",
 			"CFS_SYNCBACKEND_LIST", "CFS_SYNCBACKEND_CONFIG",
+			"CFS_BENCHRULE_LIST", "CFS_BENCHRULE_GET",
+			"CFS_BENCHTASK_LIST", "CFS_BENCHTASK_GET",
+			"CFS_POSIXCHECK_LIST", "CFS_POSIXCHECK_GET",
 			"CFS_S3_FILES_LIST", "CFS_S3_FILES_DOWNLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_SIGNEDURL", "CFS_S3_FILES_UPLOAD_MULTIPART_COMPLETE", "CFS_S3_DIRS_CREATE",
 		},
 	}
@@ -221,6 +227,28 @@ var (
 		{AuthCode: "CFS_SYNCBACKEND_UPDATE", AuthName: "update sync storage backend", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/update", Method: "POST", IsLogin: true, IsCheck: true},
 		{AuthCode: "CFS_SYNCBACKEND_DELETE", AuthName: "delete sync storage backend", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/delete", Method: "POST", IsLogin: true, IsCheck: true},
 		{AuthCode: "CFS_SYNCBACKEND_CONFIG", AuthName: "get sync storage backend config", AuthType: &backend, URI: prefix + "/cfs/:cluster/syncStorageBackend/config", Method: "GET", IsLogin: true, IsCheck: true},
+
+		// cfs.benchRule
+		{AuthCode: "CFS_BENCHRULE_LIST", AuthName: "list bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHRULE_GET", AuthName: "get bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/get", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHRULE_CREATE", AuthName: "create bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/create", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHRULE_UPDATE", AuthName: "update bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/update", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHRULE_DELETE", AuthName: "delete bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/delete", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHRULE_TRIGGER", AuthName: "trigger bench rule", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchRule/trigger", Method: "POST", IsLogin: true, IsCheck: true},
+
+		// cfs.benchTask
+		{AuthCode: "CFS_BENCHTASK_LIST", AuthName: "list bench task", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchTask/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHTASK_GET", AuthName: "get bench task", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchTask/get", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHTASK_CANCEL", AuthName: "cancel bench task", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchTask/cancel", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHTASK_RETRY", AuthName: "retry bench task", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchTask/retry", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_BENCHTASK_DELETE", AuthName: "delete bench task", AuthType: &backend, URI: prefix + "/cfs/:cluster/benchTask/delete", Method: "POST", IsLogin: true, IsCheck: true},
+
+		// cfs.posixCheck — POSIX 兼容性测试（pjd-fstest）独立路径
+		{AuthCode: "CFS_POSIXCHECK_LIST", AuthName: "list posix check runs", AuthType: &backend, URI: prefix + "/cfs/:cluster/posixCheck/list", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_POSIXCHECK_GET", AuthName: "get posix check run", AuthType: &backend, URI: prefix + "/cfs/:cluster/posixCheck/get", Method: "GET", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_POSIXCHECK_RUN", AuthName: "run posix check", AuthType: &backend, URI: prefix + "/cfs/:cluster/posixCheck/run", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_POSIXCHECK_CANCEL", AuthName: "cancel posix check run", AuthType: &backend, URI: prefix + "/cfs/:cluster/posixCheck/cancel", Method: "POST", IsLogin: true, IsCheck: true},
+		{AuthCode: "CFS_POSIXCHECK_DELETE", AuthName: "delete posix check run", AuthType: &backend, URI: prefix + "/cfs/:cluster/posixCheck/delete", Method: "POST", IsLogin: true, IsCheck: true},
 
 		// cfs.s3
 		{AuthCode: "CFS_S3_FILES_LIST", AuthName: "list s3 files", AuthType: &backend, URI: prefix + "/cfs/:cluster/s3/files/list", Method: "GET", IsLogin: true, IsCheck: true},

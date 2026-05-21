@@ -38,7 +38,7 @@
       <el-form-item :label="$t('resource.srcaddr')" prop="src_addr">
         <el-input v-model="formData.src_addr" :disabled="true"></el-input>
       </el-form-item>
-      <el-form-item :label="$t('resource.dstaddr')" prop="target_addr" :rules="[{ required: true, message: this.$t('resource.selectdst'), trigger: 'change' }]">
+      <el-form-item :label="$t('resource.dstaddr')" prop="target_addr" :rules="[{ required: true, message: $t('resource.selectdst'), trigger: 'change' }]">
         <el-select v-model="formData.target_addr">
           <el-option
             v-for="item in addressList"

@@ -24,18 +24,20 @@ import (
 )
 
 type Cluster struct {
-	Id         int64          `gorm:"primaryKey;auto_increment" json:"id"`
-	Name       string         `gorm:"type:varchar(100);not null;default:'';index" json:"name"`
-	MasterAddr types.StrSlice `gorm:"type:varchar(1024);not null;default:'[]'" json:"master_addr"`
-	IDC        string         `gorm:"column:idc;type:varchar(255);not null;default:''" json:"idc"`
-	Cli        string         `gorm:"type:varchar(255);not null;default:''" json:"cli"`
-	Domain     string         `gorm:"type:varchar(255);not null;default:''" json:"domain"`
-	ConsulAddr string         `gorm:"type:varchar(255);not null;default:''" json:"consul_addr"`
-	Tag        string         `gorm:"type:varchar(255);not null;default:'';index" json:"tag"`
-	S3Endpoint string         `gorm:"column:s3_endpoint;type:varchar(255);not null;default:''" json:"s3_endpoint"`
-	VolType    enums.VolType  `gorm:"type:tinyint(1);not null;default:0" json:"vol_type"`
-	CreateTime time.Time      `gorm:"create_time" json:"create_time"`
-	UpdateTime time.Time      `gorm:"update_time" json:"update_time"`
+	Id               int64            `gorm:"primaryKey;auto_increment" json:"id"`
+	Name             string           `gorm:"type:varchar(100);not null;default:'';index" json:"name"`
+	MasterAddr       types.StrSlice   `gorm:"type:varchar(1024);not null;default:'[]'" json:"master_addr"`
+	IDC              string           `gorm:"column:idc;type:varchar(255);not null;default:''" json:"idc"`
+	Cli              string           `gorm:"type:varchar(255);not null;default:''" json:"cli"`
+	Domain           string           `gorm:"type:varchar(255);not null;default:''" json:"domain"`
+	ConsulAddr       string           `gorm:"type:varchar(255);not null;default:''" json:"consul_addr"`
+	Tag              string           `gorm:"type:varchar(255);not null;default:'';index" json:"tag"`
+	S3Endpoint       string           `gorm:"column:s3_endpoint;type:varchar(255);not null;default:''" json:"s3_endpoint"`
+	SyncNodeHTTPPort int              `gorm:"column:sync_node_http_port;type:int;not null;default:17911" json:"sync_node_http_port"`
+	SyncAdminToken   types.EncryptStr `gorm:"column:sync_admin_token;type:varchar(500);not null;default:''" json:"-"`
+	VolType          enums.VolType    `gorm:"type:tinyint(1);not null;default:0" json:"vol_type"`
+	CreateTime       time.Time        `gorm:"create_time" json:"create_time"`
+	UpdateTime       time.Time        `gorm:"update_time" json:"update_time"`
 }
 
 func (c *Cluster) Create() error {

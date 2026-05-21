@@ -35,7 +35,7 @@
           <el-option value="en" label="English"></el-option>
         </el-select>
       </div>
-      <div class="role">{{ $t('layout.currentrole')}}: 
+      <div class="role">{{ $t('layout.currentrole') }}:
         <el-tooltip effect="dark" :content="roleList.join()" placement="bottom">
           <span>{{ roleList[0] }}</span>
         </el-tooltip>
@@ -45,7 +45,7 @@
           {{ userInfo?.user_name }}<i class="el-icon-arrow-down el-icon--right"></i>
         </span>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="docs">{{ $t('layout.help')}}</el-dropdown-item>
+          <el-dropdown-item command="docs">{{ $t('layout.help') }}</el-dropdown-item>
           <el-dropdown-item command="logout">{{ $t('layout.signout') }}</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -76,7 +76,7 @@
         <div class="main-inner">
           <div class="main-top">
             <breadcrumb v-if="!$route.meta.breadcrumbHide" class="m-b-15"></breadcrumb>
-            <p class="current-cluster" v-if="!['clusterList', 'authManage'].includes($route.name)">{{ $t('layout.currentcluster') }}: {{ clusterName || $t('layout.null') }}</p>
+            <p v-if="!['clusterList', 'authManage'].includes($route.name)" class="current-cluster">{{ $t('layout.currentcluster') }}: {{ clusterName || $t('layout.null') }}</p>
           </div>
           <main-content></main-content>
         </div>
@@ -93,12 +93,12 @@ import mixin from '@/pages/cfs/clusterOverview/mixin'
 
 export default {
   name: 'DashboardLayout',
-  mixins: [mixin],
   components: {
     MenuTree, // 管理控制台菜单树
     Breadcrumb,
     MainContent,
   },
+  mixins: [mixin],
   props: {
     hideSidebar: {
       type: Boolean,
@@ -209,7 +209,7 @@ export default {
     },
     changeLang() {
       const langType = this.language
-      localStorage.setItem("language", langType)
+      localStorage.setItem('language', langType)
       this.$i18n.locale = langType
     },
   },

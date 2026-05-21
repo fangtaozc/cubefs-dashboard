@@ -47,10 +47,10 @@
         <el-table-column :label="$t('common.action')" :width="120" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
+              v-if="scope.row.user_type != 'root'"
               v-auth="'CFS_USERS_DELETE'"
               type="text"
               size="small"
-              v-if="scope.row.user_type != 'root'"
               @click="deleteUser(scope.row)"
             >{{ $t('common.delete') }}</el-button>
           </template>
@@ -99,18 +99,18 @@
           <el-table-column :label="$t('common.action')" :width="120">
             <template slot-scope="scope">
               <el-button
+                v-if="scope.row.policy.length >= 1 && scope.row.policy[0] != 'owner'"
                 v-auth="'CFS_USERS_POLICIES_DELETE'"
                 type="text"
                 size="small"
                 @click="deleteUserPolicies(scope.row)"
-                v-if="scope.row.policy.length >= 1 && scope.row.policy[0] != 'owner'"
               >{{ $t('common.clear') + $t('common.permissions') }}</el-button>
               <el-button
+                v-if="scope.row.policy.length == 1 && scope.row.policy[0] == 'owner'"
                 v-auth="'CFS_USERS_VOLS_TRANSFER'"
                 type="text"
                 size="small"
                 @click.stop="transferVols(scope.row)"
-                v-if="scope.row.policy.length == 1 && scope.row.policy[0] == 'owner'"
               >{{ $t('privileges.CFS_USERS_VOLS_TRANSFER') }}</el-button>
             </template>
           </el-table-column>
@@ -125,7 +125,7 @@
 import UPageTable from '@/pages/components/uPageTable'
 import CreateUser from './components/createUser'
 import TransferVols from './components/transferVols'
-import {deleteUser, deleteUserPolicy, getUserList} from '@/api/cfs/cluster'
+import { deleteUser, deleteUserPolicy, getUserList } from '@/api/cfs/cluster'
 import Mixin from '@/pages/cfs/clusterOverview/mixin'
 export default {
   components: {
@@ -214,7 +214,7 @@ export default {
             showClose: true,
             message: this.$t('common.delete') + this.$t('common.failed') + '\n' + res.data,
             type: 'error',
-            duration: 10000
+            duration: 10000,
           })
         }
       } catch (e) {}
@@ -227,7 +227,7 @@ export default {
             showClose: true,
             message: message,
             type: 'error',
-            duration: 6000
+            duration: 6000,
           })
           return
         }
@@ -249,7 +249,7 @@ export default {
             showClose: true,
             message: this.$t('common.clear') + this.$t('common.permissions') + this.$t('common.failed') + '\n' + res.data,
             type: 'error',
-            duration: 10000
+            duration: 10000,
           })
         }
       } catch (e) {}
